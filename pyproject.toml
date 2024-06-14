@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools >= 60.5.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+authors = [{name="BNerot", email="boris.nerot@univ-smb.fr"}]
+name = "sgis"
+version = "0.1"
+description = "Detect solar installations on building roofs, using aerial imagery and convolutional neural network"                      
+keywords = ["aerial", "building", "solar energy", "machine learning"]          
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = [
+# "tensorflow",
+# "qgis",
+# "tqdm",
+# "pandas",
+# "numpy",
+]
+requires-python = ">= 3.10"
+classifiers = [
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Scientific/Engineering :: Image Processing",
+        "Topic :: Scientific/Engineering :: GIS"
+]
+
+[project.urls]
+Laboratory = "https://www.univ-smb.fr/locie/"

@@ -1,0 +1,736 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>sgis.vector_tools package &#8212; sgis 0.1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/sgis.vector_tools';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sgis.splitter package" href="sgis.splitter.html" />
+    <link rel="prev" title="Welcome to sgis’s documentation!" href="../index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">sgis 0.1 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">sgis.vector_tools package</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="sgis.splitter.html">sgis.splitter package</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="sgis.classifier.html">sgis.classifier package</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/source/sgis.vector_tools.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>sgis.vector_tools package</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-sgis.vector_tools">Module contents</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="sgis-vector-tools-package">
+<h1>sgis.vector_tools package<a class="headerlink" href="#sgis-vector-tools-package" title="Permalink to this heading">#</a></h1>
+<section id="module-sgis.vector_tools">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sgis.vector_tools" title="Permalink to this heading">#</a></h2>
+<p>A small intro to <cite>vector_tools</cite></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.add_ID">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">add_ID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.add_ID" title="Permalink to this definition">#</a></dt>
+<dd><p>Add a numerical ID as a new field to a layer.</p>
+<p>This ID can be prefixed with a given string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – Common part of all features ID, at the beginning of the ID.</p></li>
+<li><p><strong>field_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of , by default 11</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shallow copy of <cite>layer</cite> with an additionnal ‘ID’ field.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>ID is computed as: ID = concatenation(prefix, id-1) where ‘id’ is the Qgis id of the feature.
+Thus:</p>
+<ul class="simple">
+<li><p>ID start from 0.</p></li>
+<li><p>The new field is of type str.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.add_XY_coordinates">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">add_XY_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.add_XY_coordinates" title="Permalink to this definition">#</a></dt>
+<dd><p>Add to a layer 2 new fields for the (X, Y) coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shallow copy of <cite>layer</cite> with two new fields: ‘X’ and ‘Y’</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>‘X’ and ‘Y’ field are of type float.</p></li>
+<li><p>Precision is one decimal</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.add_buffer_distance">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">add_buffer_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.add_buffer_distance" title="Permalink to this definition">#</a></dt>
+<dd><p>Increase the area of every feature of a layer by adding a buffer distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process.</p></li>
+<li><p><strong>distance</strong> (<em>float</em><em>, </em><em>optional</em>) – Distance, in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Copy of <cite>layer</cite> with modified feature geometries</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.add_protected_buildings">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">add_protected_buildings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_protected_buildings</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.add_protected_buildings" title="Permalink to this definition">#</a></dt>
+<dd><p>Quite specific to the French case. Add a boolean attribute, for every building of a vector layer, that states whether
+this building is included in an architectural protected area.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process.</p></li>
+<li><p><strong>layer_protected_buildings</strong> (<em>QgsVectorLayer</em>) – Vector layer whose features correspond to protected areas. This layer must be downloaded at <a class="reference external" href="http://atlas.patrimoines.culture.fr/atlas/trunk/">http://atlas.patrimoines.culture.fr/atlas/trunk/</a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Original <cite>layer</cite> with a new ‘protected’ boolean attribute that describes whether a building lies in a protected area.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ol class="arabic">
+<li><p>This method must be called before <cite>merge_overlapped_buildings</cite>.</p></li>
+<li><p>The algorithm proceeds this way:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Both vector files are loaded.</p></li>
+<li><p>Spatial intersection is performed.</p></li>
+<li><p>Buildings for which this intersection is not empty get ‘protected=True’, other buildings get ‘protected=False’.</p></li>
+<li><p>Useless fields (generated by the intersection) are removed.</p></li>
+</ol>
+</div></blockquote>
+</li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.add_roof_type">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">add_roof_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roof_data_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.add_roof_type" title="Permalink to this definition">#</a></dt>
+<dd><p>Quite specific to the French case. Add to a building vector layer a ‘toiture’ attribute that describes the most-likely
+roof type (material, color) of the building.</p>
+<p>The assigned roof type of building ‘k’ is the dominant roof type among the buildings of the village of building ‘k’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – <p>The layer to process. Every feature is a building.
+Must have the following attributes:</p>
+<ul>
+<li><p>’ID’: str, identifier of the building</p></li>
+<li><p>’commune’: str, post-code of the village of the building</p></li>
+</ul>
+</p></li>
+<li><p><strong>roof_data_path</strong> (<em>path-like</em>) – <p>CSV file containing the roof type information. Every feature is a building.
+Must have the following attributes (columns):</p>
+<ul>
+<li><p>’batiment_groupe_id’: str</p></li>
+<li><p>’mat_toit_txt’: str</p></li>
+</ul>
+<p>The post-code is read as the first 5 characters of ‘batiment_groupe_id’, and compared to the ‘commune’ attribute of <cite>layer</cite>.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The share of each roof type in <cite>roof_data_path</cite>, independantly from the commune. For informational purpose only.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.Series</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ol class="arabic">
+<li><p>The roof type dataset (<cite>roof_data_path</cite>) is an information produced by the Base de Données Nationale des Bâtiments (BDNB). It can be downloaded
+at <a class="reference external" href="https://www.data.gouv.fr/en/datasets/base-de-donnees-nationale-des-batiments/">https://www.data.gouv.fr/en/datasets/base-de-donnees-nationale-des-batiments/</a>.
+The downloaded files include many other datasets. The roof type information is stored as CSV files (‘batiment_groupe_ffo_bat_[…].csv’) and can be processed department per department:</p></li>
+<li><p>Regarding the roof type dataset:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Not all buildings and communes are described</p></li>
+<li><p>Whenever an entire commune or the ‘mat_toit_txt’ field for a building is missing, the ‘UNKNOWN’ string is used as the roof-type.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>The reason not to assign the roof type to each building of <cite>layer</cite> is a lack of a common building identifier for <cite>layer</cite> (cadastre data) and roof types (BDNB data).</p></li>
+<li><p>The layer is modified in-place, i.e. no copy is returned.</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.clean_processing_folder">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">clean_processing_folder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.clean_processing_folder" title="Permalink to this definition">#</a></dt>
+<dd><p>Delete the content of the Qgis processing temporary folder. Use with caution.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.copy_layer">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">copy_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.copy_layer" title="Permalink to this definition">#</a></dt>
+<dd><p>Copy a layer in memory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to copy. The geomtry type must be ‘Polygon’.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the copy. If None, name is the name of <cite>layer</cite> appended with ‘_copy’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Copied layer</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.export_csv">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">export_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.export_csv" title="Permalink to this definition">#</a></dt>
+<dd><p>Write the attribute table of a vector layer in a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer whose attributes must be exported.</p></li>
+<li><p><strong>full_path</strong> (<em>path-like</em>) – Path of the CSV file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AttributeError</strong> – If <cite>full_path</cite> is not a path to a CSV file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.export_shp">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">export_shp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.export_shp" title="Permalink to this definition">#</a></dt>
+<dd><p>Export a vector layer as an SHP file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to export</p></li>
+<li><p><strong>path</strong> (<em>path-like</em>) – Path of the directory to which SHP file is exported.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the exported SHP file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AttributeError</strong> – If <cite>path</cite> is not a directory.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.load_layer">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">load_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.load_layer" title="Permalink to this definition">#</a></dt>
+<dd><p>Load a vector layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full_path</strong> (<em>path-like</em>) – Path of the SHP layer to load.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em>) – Name of the loaded layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Layer at <cite>full_path</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Whenever Qgis loading of the layer fails.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Modifications of the layer may propagate to the original file on disk.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.merge_overlapped_buildings">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">merge_overlapped_buildings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_field_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Score'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.merge_overlapped_buildings" title="Permalink to this definition">#</a></dt>
+<dd><p>Merge every couple of features whose geometries intersect.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process. The geometry type must be ‘Polygon’.</p></li>
+<li><p><strong>reference_field_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Numerical attribute of <cite>layer</cite> used as a criteria for the merge operation.
+The attributes of the resulting feature are the one of the feature having the higher value for <cite>reference_field_name</cite>.
+By default ‘Score’</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The layer is modified in-place, i.e. no copy is returned.
+If feature A intersects feature B, and B intersects C then the resulting merged feature includes all of A, B and C geometries. Same for n &gt; 3 intersections.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.remove_small_features">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">remove_small_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.remove_small_features" title="Permalink to this definition">#</a></dt>
+<dd><p>Delete every feature whose area is smaller than a given threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process.</p></li>
+<li><p><strong>min_area</strong> (<em>float</em><em>, </em><em>optional</em>) – Feature whose area is smaller than this will be deleted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Copy of <cite>layer</cite> with some deleted features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QgsVectorLayer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sgis.vector_tools.update_on_ID">
+<span class="sig-prename descclassname"><span class="pre">sgis.vector_tools.</span></span><span class="sig-name descname"><span class="pre">update_on_ID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgis.vector_tools.update_on_ID" title="Permalink to this definition">#</a></dt>
+<dd><p>Add the data of a DataFrame to the attribute table of a vector layer.</p>
+<p>Columns of the DataFrame become attributes of the layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>QgsVectorLayer</em>) – Layer to process. Must have an ‘ID’ attribute that corresponds to the index of <cite>dataframe</cite>.</p></li>
+<li><p><strong>dataframe</strong> (<em>pandas.DataFrame</em>) – Index of DataFrame must be the ID of the building, with a str dtype.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – If dtype of one column in <cite>dataframe</cite> is not float, int or string.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Regarding missing elements:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If some features are in the layer but not in the DataFrame: they are not updated.</p></li>
+<li><p>If some features are in the DataFrame but not in the layer: they are ignored.</p></li>
+</ul>
+</div></blockquote>
+<p><cite>dataframe</cite> is not modified by these operations.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Welcome to sgis’s documentation!</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="sgis.splitter.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">sgis.splitter package</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-sgis.vector_tools">Module contents</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By BNerot
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, BNerot.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
