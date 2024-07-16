@@ -301,6 +301,7 @@ def merge_overlapped_buildings(layer, reference_field_name='Score'):
 
     # prepare union of geometry and deletion of features, for overlapping buildings
     cpt = 0
+    cpt_no_score = 0
     to_delete_features = []
     to_update_geom = {}
     features = layer.getFeatures()
@@ -318,6 +319,7 @@ def merge_overlapped_buildings(layer, reference_field_name='Score'):
             if score_ is None:
                 logger.warning(f"Feature with ID {ID} has no value for field '{reference_field_name}'. Assuming 0.")
                 score_ = 0
+                cpt_no_score += 1
             if score_ > score:
                 score = score_
                 leading_feature = feature
@@ -329,6 +331,8 @@ def merge_overlapped_buildings(layer, reference_field_name='Score'):
         to_update_geom[leading_feature] = geom
         to_delete_features += other_features
 
+    if cpt_no_score > 100:
+        logger.warning(f"More than 100 features had no value for field '{reference_field_name}'.")
 
 
     # modify layer

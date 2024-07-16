@@ -3,6 +3,12 @@
 __setup.py
 __setup.cfg
 test/
+notes
+env
+# environment.yml
+.readthedocs.yaml
+
+
 #
 # Python
 #

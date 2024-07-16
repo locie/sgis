@@ -108,7 +108,7 @@ def add_ID(layer, prefix='', field_length=11):
     prefix : str, optional
         Common part of all features ID, at the beginning of the ID.
     field_length : int, optional
-        Number of , by default 11
+        Number of digits for the ID field, by default 11
 
     Returns
     -------

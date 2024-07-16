@@ -480,7 +480,7 @@ class CNNModel():
         """
                 # fixme: testme: mode 3 classes
 
-        if not any(save_scores, copy_images):
+        if not any((save_scores, copy_images)):
             raise ValueError(f"Both `save_scores` and `copy_images` are set to False which would lead to no exported results.")
         logger = get_logger()
         input_path, output_path = prepare_paths(input_path, output_path)

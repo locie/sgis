@@ -134,7 +134,7 @@ class Splitter():
         already_processed = [r for r in already_processed if r in map(str, input_rasters)]  # only the processed ones that have to do with the currently treated layers
         logger.info(f"{len(already_processed)}/{len(input_rasters)} rasters were previously processed")
         input_rasters = [r for r in input_rasters if str(r) not in already_processed]
-        logger.info(f"{len(input_rasters)} rasters are still to be processed")
+        logger.info(f"{len(input_rasters)} rasters remaining")
 
         return input_rasters, progress_file
 
