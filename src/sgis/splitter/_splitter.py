@@ -168,17 +168,32 @@ class Splitter():
         logger = get_logger()
         shapefile = str(self._vector_layer_path)
         input_rasters, progress_file = self._determine_unprocessed_rasters()
-
+        if threads_num is None:
+            threads_num = 1
+        quotient, remainder = divmod(len(input_rasters), threads_num)
         if not overwrite_with_suffix:
             logger.warning('`overwrite_with_suffix=False`: In case of a building spread over several rasters, only one image will be saved.')
 
-        if (threads_num == 1) or (threads_num is None):
+        if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
+            if (quotient == 0) and (remainder != 0):
+                logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
+
             logger.info('Sequential mode')
             for raster in input_rasters:  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
                 self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
                 with open(progress_file, 'a') as f:
                     f.write(str(raster) + '\n')
-        else:
+        else:   
+            
+            # nerotb 18/07/2024: 
+            # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
+            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas proportionnel au nombre de threads
+            # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
+
+            input_rasters = input_rasters[:quotient * threads_num]  # fix_A
+
+
+
             if not isinstance(threads_num, int):
                 raise TypeError(f'Invalid type for `threads_num`.')
             logger.info(f"Number of threads: {threads_num}")
@@ -198,8 +213,7 @@ class Splitter():
                 for raster in tqdm(input_rasters, desc=f'Raster loop - {threads_num} threads', leave=True,
                                    miniters=10, colour='green', unit='raster', ncols=100):
                     executor.submit(_threaded, raster, overwrite_with_suffix, lock_file_write)
-
-    
+            self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
 
 
     def _find_split_intersect(self, raster, shapefile, overwrite_with_suffix):

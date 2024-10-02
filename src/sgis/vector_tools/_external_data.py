@@ -199,7 +199,7 @@ def add_roof_type(layer, roof_data_path):
     return df.groupby('mat_toit_txt').count().iloc[:,0].sort_values(ascending=False)
 
 
-def merge_overlapped_buildings(layer, reference_field_name='Score'):
+def merge_overlapped_buildings(layer, reference_field_name='Score', min_field_value=None):
     """Merge every couple of features whose geometries intersect. 
 
 
@@ -211,22 +211,35 @@ def merge_overlapped_buildings(layer, reference_field_name='Score'):
         Numerical attribute of `layer` used as a criteria for the merge operation. 
         The attributes of the resulting feature are the one of the feature having the higher value for `reference_field_name`.
         By default 'Score'
+    min_field_value : float, optional
+        Minimum value that each feature of a merging group must observed for the field `reference_field_name`.
 
     Notes
     -----
     The layer is modified in-place, i.e. no copy is returned.
     If feature A intersects feature B, and B intersects C then the resulting merged feature includes all of A, B and C geometries. Same for n > 3 intersections.
+    If `min_field_value` is specified, intersection between any features A and B is considered 
+    if and only if both A and B has a value greater or equal than `min_field_value` for their `reference_field_name` field.
     """
     logger = get_logger()
 
 
 
     logger.info(f"Computing intersections for pairs of buildings")
+    if min_field_value is not None:
+        logger.info(f"Only features with {reference_field_name} >= {min_field_value} will be considered for merging.")
+        layer.setSubsetString(f'"{reference_field_name}" >= {min_field_value}')
+
+        
     result = processing.run("native:multiintersection",
                             {'INPUT': layer,
                                 'OVERLAYS': [layer],
                                 'OVERLAY_FIELDS_PREFIX': '',
                                 'OUTPUT': 'memory:'})
+    
+    if min_field_value is not None:
+        layer.setSubsetString('')
+
     intersect = result["OUTPUT"]
     intersect.setSubsetString('"ID" != "ID_2"')
 
