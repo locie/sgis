@@ -33,7 +33,7 @@ def load_layer(full_path, layer_name):
     """
     full_path = prepare_paths(full_path, as_str=True)
     logger = get_logger()
-    logger.info(f"Loading layer at {full_path}")
+    logger.debug(f"Loading layer at {full_path}")
     layer = QgsVectorLayer(full_path, layer_name, "ogr")
     if not layer.isValid():
         raise ValueError('Layer failed to load!')
@@ -91,6 +91,8 @@ def export_csv(layer, full_path):
     full_path = prepare_paths(full_path, as_str=True)
     if not full_path.endswith('csv'):
         raise AttributeError("`full_path` must be a 'CSV' file.")
+    logger = get_logger()
+    logger.info(f'Exporting layer as CSV: {full_path}')
     _export(layer, full_path)
 
 def export_shp(layer, path, name):
@@ -128,6 +130,8 @@ def export_shp(layer, path, name):
         name += '.shp'
     options = QgsVectorFileWriter.SaveVectorOptions()
     options.driverName = "ESRI Shapefile"
+    logger = get_logger()
+    logger.info(f'Exporting layer as SHP: {full_path}')
     QgsVectorFileWriter.writeAsVectorFormatV3(layer,
                                               str(Path(full_path, name)),
                                               QgsCoordinateTransformContext(),

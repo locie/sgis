@@ -2,17 +2,50 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 from shutil import rmtree
+from sys import stderr, stdout
 
 @lru_cache()
 def get_logger():
+    """
+    Produce a logger instance. 
+
+    The logger has two handlers:
+
+    - one to `stdout` with level INFO
+
+        Format includes function name.
+
+    - one to `stderr` with level DEBUG
+        
+        Format includes function name and creation time.
+
+    Notes
+    -----
+    This function is cached: the first call creates the instances, next calls read them from memory.
+
+    Returns
+    -------
+    logging.Logger
+        Ready-to-use logger
+    """
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)  # fixme
-    formatter = logging.Formatter('[{levelname}] - [{funcName}] - {message}', style='{')
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
+    formatter1 = logging.Formatter('[{levelname}] - [{funcName}] - {message}', style='{')
+    formatter2 = logging.Formatter('[{levelname}] - [{funcName}] - [{asctime}] - {message}', style='{', datefmt='%Y-%m-%d %H:%M:%S')
+
+    stdout_ = logging.StreamHandler(stdout)
+    stderr_ = logging.StreamHandler(stderr)
+
+    stdout_.setLevel(logging.INFO)
+    stderr_.setLevel(logging.DEBUG)
+
+    stdout_.setFormatter(formatter1)
+    stderr_.setFormatter(formatter2)
+
+    logger.addHandler(stdout_)
+    logger.addHandler(stderr_)
+
     return logger
 
 

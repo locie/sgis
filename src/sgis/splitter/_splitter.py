@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from math import isinf
 from threading import Lock
 from time import perf_counter, sleep
+from sys import stderr, stdout
 
 from PyQt5.QtCore import QVariant
 from pandas import DataFrame
@@ -46,7 +47,7 @@ class Splitter():
         # fixme: testme: enlever le fichier *.shx et constater l'exception
 
     def __init__(self, vector_layer_path, raster_layers_path, output_directory_path):
-        
+        logger = get_logger()
         vector_layer_path, raster_layers_path, output_directory_path = prepare_paths(vector_layer_path, raster_layers_path, output_directory_path)
         for file_ext in ('shx', 'prj', 'dbf'): # shx: index, dbf: attributes, prj: projection
             if not vector_layer_path.with_suffix(f'.{file_ext}').exists():
@@ -57,6 +58,7 @@ class Splitter():
         for file in raster_layers_path.iterdir():
             if file.suffix in ('.jp2', '.tiff'):
                 raster_files.append(file)
+                logger.debug(f'Found raster file: {file}')
         if not raster_files:
             raise FileNotFoundError(f'No raster file found in {raster_layers_path}.')
         self._raster_files = raster_files
@@ -132,9 +134,12 @@ class Splitter():
             with open(progress_file, "w") as f:
                 f.write('')
         already_processed = [r for r in already_processed if r in map(str, input_rasters)]  # only the processed ones that have to do with the currently treated layers
+        # logger.debug(f"Already processed rasters: {already_processed}")
         logger.info(f"{len(already_processed)}/{len(input_rasters)} rasters were previously processed")
         input_rasters = [r for r in input_rasters if str(r) not in already_processed]
+        # logger.debug(f"Remaining rasters: {input_rasters}")
         logger.info(f"{len(input_rasters)} rasters remaining")
+
 
         return input_rasters, progress_file
 
@@ -150,7 +155,7 @@ class Splitter():
 
         Parameters
         ----------
-        threads_num: int
+        threads_num: int, positive
             Number of threads to allocate to the splitting task.
             Each thread is given one raster to process at a time.
 
@@ -183,36 +188,37 @@ class Splitter():
                 self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
                 with open(progress_file, 'a') as f:
                     f.write(str(raster) + '\n')
+                    logger.debug(f"Adding to progress file: '{raster}'")
         else:   
             
             # nerotb 18/07/2024: 
             # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
-            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas proportionnel au nombre de threads
+            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
             # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
-
+        
             input_rasters = input_rasters[:quotient * threads_num]  # fix_A
-
+            logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
 
 
             if not isinstance(threads_num, int):
                 raise TypeError(f'Invalid type for `threads_num`.')
-            logger.info(f"Number of threads: {threads_num}")
+            logger.debug(f"Number of threads: {threads_num}")
             if threads_num > 6:
-                logger.warning("The problem is I/O bound: a large number of threads does not largely improve performance.")
+                logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
 
             lock_file_write = Lock()
             # [info] la Semaphore doit être appliquée en amont,
             # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
-            def _threaded(raster, overwrite_with_suffix, lock_file_write):
+            def _threaded(raster, overwrite_with_suffix, logger, lock_file_write):
                 self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
                 with lock_file_write:
                     with open(progress_file, 'a') as f:
                         f.write(str(raster) + '\n')
+                        logger.debug(f"Adding to progress file: '{raster}'")
 
             with ThreadPoolExecutor(threads_num) as executor:
-                for raster in tqdm(input_rasters, desc=f'Raster loop - {threads_num} threads', leave=True,
-                                   miniters=10, colour='green', unit='raster', ncols=100):
-                    executor.submit(_threaded, raster, overwrite_with_suffix, lock_file_write)
+                for raster in input_rasters:
+                    executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write)
             self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
 
 
@@ -220,12 +226,15 @@ class Splitter():
         '''
         1) Compute the OMBB of each feature 2) test whether it intersects with the raster
         '''
+        logger = get_logger()
+        logger.info(f"Processing raster: {raster}")
+
         raster_layer = QgsRasterLayer(str(raster), raster.name)
         vector_layer = load_layer(str(shapefile), 'preprocessed_vector')
-        logger = get_logger()
 
         if 'ID' not in vector_layer.fields().names():
             raise KeyError("Vector layer must have an 'ID' attribute.")
+        
         vector_layer_OMBB = QgsVectorLayer('Polygon',
                                            f'temporary_layer_{id(raster_layer)}',
                                            'memory')  # `id(...)` is just used to set a random identifier to make sure memory is not shared due to same name
@@ -238,14 +247,15 @@ class Splitter():
         vector_layer_OMBB.startEditing()
         raster_layer_extent = raster_layer.extent()
         data_provider = vector_layer_OMBB.dataProvider()
+        logger.info(f'Computing overlap: {raster}')
         for feature in tqdm(vector_layer.getFeatures(), desc=f'Overlap', leave=True, colour='blue', unit='building',
-                            total=vector_layer.featureCount(), ncols=100):
+                            total=vector_layer.featureCount(), ncols=100, miniters=10000, mininterval=10, file=stderr):
 
             bounding_box = feature.geometry().boundingBox()
 
             cond = raster_layer_extent.intersect(bounding_box).area()
             if cond and not isinf(cond):
-                logger.debug(f"Feature with ID '{feature['ID']}' intersects raster '{raster.name}'") # fixme: uncomment
+                # logger.debug(f"Feature with ID '{feature['ID']}' intersects raster '{raster.name}'") # fixme: uncomment
                 polygon = feature.geometry().orientedMinimumBoundingBox()[0]
 
                 ft = QgsFeature()
@@ -318,19 +328,23 @@ class Splitter():
                       f'{len(to_write)} buildings remaining')
 
             # normal disk write
-            for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ', leave=False,
-                                          colour='red', unit='buildings', ncols=150):
+            for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ', leave=True,
+                                          colour='red', unit='buildings', ncols=150, miniters=10, file=stdout):
                 self._do_split(raster_layer, vector_layer, q, path)
 
             # files existence check
             failed_write = []
             for q, path, filename in to_write:
                 if not path.exists():
+                    logger.debug(f"Error writing file: {filename}")
                     failed_write.append((q, path, filename))
 
             # prepare for another loop if needed
             to_write = failed_write.copy()
             count += 1
+
+        t1 = perf_counter()
+
 
         # improvement of raster tracability: association of image names and the corresponding raster
         # --> the names are the one that should have been written on disk, not the one actually written
@@ -344,13 +358,10 @@ class Splitter():
             path_raster_buildings.mkdir(exist_ok=True)
             raster_buildings.to_csv(path_raster_buildings / raster_name.replace(".jp2", ".csv"),
                                     index=False)
-
-        t1 = perf_counter()
-        if not raster_buildings.empty:
             logger.info(
                 f"{raster_name}: {len(args)} buildings took {t1 - t0:1.0f} seconds, i.e. {(t1 - t0) / len(args):1.2f} s/buildings.")
         else:
-            logger.info(f"{raster_name}: 0 buildings found.")
+            logger.info(f'No building in raster: {input_raster}.')
 
 
 

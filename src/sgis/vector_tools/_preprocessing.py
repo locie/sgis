@@ -64,8 +64,8 @@ def remove_small_features(layer, min_area=10):
                                     'INPUT': layer,
                                     'OUTPUT': 'memory:',
                                     'FIELD_NAME': 'area',
-                                    'FIELD_TYPE': 0,
-                                    'FIELD_LENGTH': 11,  # max 10 million buildings + 3 letters for zip code
+                                    'FIELD_TYPE': 0,     # double, yet of precision 0 hence int
+                                    'FIELD_LENGTH': 11,
                                     'FORMULA': 'area(@geometry)',
                                 },
                                 context=context,
@@ -94,7 +94,7 @@ def remove_small_features(layer, min_area=10):
             initial_buildings_number,
             min_area
         ))
-    return with_area
+    return with_area, unwanted_buildings_number, initial_buildings_number
 
 def add_ID(layer, prefix='', field_length=11):
     """Add a numerical ID as a new field to a layer.
@@ -137,7 +137,7 @@ def add_ID(layer, prefix='', field_length=11):
                     {
                     'INPUT': layer,
                     'FIELD_NAME': 'ID',
-                    'FIELD_TYPE': 2,
+                    'FIELD_TYPE': 2,   # text
                     'FIELD_LENGTH': field_length, 
                     'FORMULA': f'concat(\'{prefix}\', to_string(@id-1))',
                     'OUTPUT': 'memory:',
@@ -173,7 +173,7 @@ def add_XY_coordinates(layer):
     algresult = processing.run("native:fieldcalculator",
                     {'INPUT': layer,
                     'FIELD_NAME':'X',
-                    'FIELD_TYPE':0,
+                    'FIELD_TYPE':0,   # double
                     'FIELD_LENGTH':10,
                     'FIELD_PRECISION':1,
                     'FORMULA': 'x(@geometry)',
@@ -187,7 +187,7 @@ def add_XY_coordinates(layer):
     algresult = processing.run("native:fieldcalculator",
                     {'INPUT': algresult['OUTPUT'],
                     'FIELD_NAME':'Y',
-                    'FIELD_TYPE':0,
+                    'FIELD_TYPE':0,     # double
                     'FIELD_LENGTH':10,
                     'FIELD_PRECISION':1,
                     'FORMULA':'y(@geometry)',

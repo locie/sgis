@@ -422,7 +422,7 @@ class CNNModel():
              in ]0, 1[]. Percentage of data that is loaded from the disk.
         """
         logger = get_logger()
-        logger.debug(f"Loading {share:.3%} of images stored in '{dataset_path}'")
+        logger.debug(f"Loading {share:.5%} of images stored in '{dataset_path}'")
         transform = CNNModel._transform(self.img_size[0], self.img_size[1])
         self._prediction_set = image_dataset_from_directory(
             label_mode=None,
@@ -501,6 +501,7 @@ class CNNModel():
             predictions_exp = exp(predictions)
             predictions_score = predictions_exp / sum(predictions_exp, axis=1, keepdims=True)
         df = DataFrame(data=predictions_score.max(axis=1), columns=['Score']).round(7)
+        print(df)
         df['Predicted class'] = predicted_class
         df['Predicted class'] = df['Predicted class'].replace(self._class_names_idx)
         df['File paths'] = self._prediction_set.file_paths
@@ -671,7 +672,7 @@ class CNNModel():
                         except BaseException as e:
                             if not isinstance(e, urllib.error.HTTPError):
                                 pass
-                            logger.warn(
+                            logger.warning(
                                 f'Unable to retrieve image with coordinates {(min_x_, min_y_, max_x_, max_y_)}. Will try again a few times.')
                             logger.debug(f'The following exception was raised: {e}')
                             logger.debug(f'url is {url}')
