@@ -407,7 +407,7 @@ class CNNModel():
         return result
 
 
-    def _load_prediction_dataset(self, dataset_path, share):
+    def _load_prediction_dataset(self, dataset_path, share, batch_size):
         """ 
         :parameter share: float in ]0, 1[, default 1. Percentage of data that is loaded from the disk.
         :parameter transform: transformation applied to each image of the dataset.
@@ -431,11 +431,11 @@ class CNNModel():
             subset='validation',
             validation_split=share,
             seed=42,
-            batch_size=32,              # todo: enable user modification?
+            batch_size=batch_size, 
             image_size=self.img_size,
             transform=transform,
         )
-    def predict(self, input_path, output_path, share=0.999, copy_images=False, save_scores=True):
+    def predict(self, input_path, output_path, share=0.999, copy_images=False, save_scores=True, batch_size=32):
         """Apply the model to images stored locally. 
         
         In 2 classes mode, the prediction score is compared to the 0.5 threshold in order to determine the class.
@@ -488,7 +488,7 @@ class CNNModel():
             raise FileNotFoundError(f"`input_path` must have a subdirectory 'images' containing images, got '{input_path}'.")
         if not isinstance(share, float) and ((0 < share) and (share <1)):
             raise ValueError('Share must satisfy 0 < `share` < 1.')
-        self._load_prediction_dataset(input_path, share)
+        self._load_prediction_dataset(input_path, share, batch_size=batch_size)
         logger.info('Predictions begin')
         predictions = self._model.predict(x=self._prediction_set, verbose=2)
 
@@ -529,7 +529,7 @@ class CNNModel():
 
         return df
 
-    def predict_from_coordinates(self, input_save_path, output_path, min_x, min_y, max_x, max_y, resolution=0.2, copy_images=False, save_scores=True):
+    def predict_from_coordinates(self, input_save_path, output_path, min_x, min_y, max_x, max_y, resolution=0.2, copy_images=False, save_scores=True, batch_size=32):
         """For the French case only. Apply the classification model to raw tiles downloaded from the IGN database.
 
         An arbitrary large area is described using x and y coordinates.
@@ -678,7 +678,7 @@ class CNNModel():
                             logger.debug(f'url is {url}')
         if remaining_tiles:
             logger.error(f'{len(remaining_tiles)} out of {len(tiles)} images could not be downloaded. Skipping these images.')
-        return self.predict(input_save_path.parent, output_path, copy_images=copy_images, save_scores=save_scores)
+        return self.predict(input_save_path.parent, output_path, copy_images=copy_images, save_scores=save_scores, batch_size=batch_size)
 
     def save_model(self, path):
         """Save the model and its metadata.
