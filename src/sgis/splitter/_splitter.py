@@ -184,7 +184,8 @@ class Splitter():
                 logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
 
             logger.info('Sequential mode')
-            for raster in input_rasters:  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+            for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+                logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
                 self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
                 with open(progress_file, 'a') as f:
                     f.write(str(raster) + '\n')
@@ -209,7 +210,8 @@ class Splitter():
             lock_file_write = Lock()
             # [info] la Semaphore doit être appliquée en amont,
             # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
-            def _threaded(raster, overwrite_with_suffix, logger, lock_file_write):
+            def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
+                logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
                 self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
                 with lock_file_write:
                     with open(progress_file, 'a') as f:
@@ -217,8 +219,8 @@ class Splitter():
                         logger.debug(f"Adding to progress file: '{raster}'")
 
             with ThreadPoolExecutor(threads_num) as executor:
-                for raster in input_rasters:
-                    executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write)
+                for idx, raster in enumerate(input_rasters):
+                    executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
             self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
 
 
@@ -227,8 +229,6 @@ class Splitter():
         1) Compute the OMBB of each feature 2) test whether it intersects with the raster
         '''
         logger = get_logger()
-        logger.info(f"Processing raster: {raster}")
-
         raster_layer = QgsRasterLayer(str(raster), raster.name)
         vector_layer = load_layer(str(shapefile), 'preprocessed_vector')
 

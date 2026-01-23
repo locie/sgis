@@ -478,7 +478,8 @@ class CNNModel():
 
         
         """
-                # fixme: testme: mode 3 classes
+        # fixme: testme: mode 3 classes
+        # todo: augmenter la valeur par défaut de l'argument `batch_size`
 
         if not any((save_scores, copy_images)):
             raise ValueError(f"Both `save_scores` and `copy_images` are set to False which would lead to no exported results.")
