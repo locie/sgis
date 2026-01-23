@@ -1,0 +1,22 @@
+
+
+find rasters/images -iname "*.jpg" | wc -l
+
+find rasters/images -iname "*_*.jpg" | wc -l
+
+find rasters/images -iname "*.jpg" -size -100c | wc -l
+
+cat rasters/progress.txt | wc -l
+
+ls rasters/repartition_by_rasters | wc -l
+
+
+
+# ls ~/temporary_LaCie/rasters/only_tiles/[...]/*jp2 | wc -l
+# find rasters/images -iname "*.jpg" -size -100c -delete
+
+
+Verification:
+- nombre théorique:  -  =  
+- nombre obtenu:  -  = 
+
