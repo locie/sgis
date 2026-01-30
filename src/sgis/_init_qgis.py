@@ -4,8 +4,7 @@ from qgis.core import QgsApplication , QgsProcessingContext, QgsProcessingFeedba
 qgs = QgsApplication([], False)
 qgs.initQgis()
 
-import processing
-from processing.core.Processing import Processing
+import processing from processing.core.Processing import Processing
 Processing.initialize()
 
 feedback = QgsProcessingFeedback()
