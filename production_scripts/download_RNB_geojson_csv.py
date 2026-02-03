@@ -7,6 +7,7 @@ import requests
 import zipfile
 from pathlib import Path
 import hashlib
+import json
 
 CADASTRE_FOLDER_PATH="LaCie_thebaulm/gis/vectors/cadastre"
 BASE_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files/" #R.N.B. : Référentiel National des Bâtiments
@@ -104,12 +105,12 @@ def get_csv_metadata(url):
         r.raise_for_status()
 
         metadata = {
-            "content_length": r.headers.get("Content-Length"),
+            "content_length": r.headers.get("Content-Length"), 
             "last_modified": r.headers.get("Last-Modified"),
             "etag": r.headers.get("ETag"),
-            "content_type": r.headers.get("Content-Type"),
+            "content_type": r.headers.get("Content-Type")
         }
-        print(metadata)
+        print(json.dumps(metadata, indent=2))
     
     # gestion des erreurs
     except requests.exceptions.HTTPError as e:
