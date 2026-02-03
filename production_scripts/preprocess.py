@@ -28,6 +28,12 @@ from datetime import datetime
 from sgis.vector_tools import *
 from pathlib import Path
 from os import environ
+import argparse
+import sys
+
+def die(msg):
+    print(msg)
+    sys.exit(1)
 
 # stuff to run always here such as class/def
 def main(dep, year, cadastre_dir, resolution=20):    
@@ -92,8 +98,6 @@ def main(dep, year, cadastre_dir, resolution=20):
 
 if __name__ == "__main__":
    # allows code to run only when the script is executed, not when it’s imported !
-   
-    import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--dep", type=str, required=True, help="Department code: 2 digits from 01 to 99 else 3 digits")
     parser.add_argument("--year", type=str, required=True, help='BDOrtho version [YYYY]')
@@ -103,4 +107,4 @@ if __name__ == "__main__":
     parser.add_argument("--resolution", type=int, default=20, help='Raster resolution, in cm. Exported in `version_BDORTHO`.')
     args = parser.parse_args()
     
-    main(args)
+    main(args) # args = [dep, year, cadastre_dir, resolution]

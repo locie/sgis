@@ -1,6 +1,9 @@
-# cas d'absence de session X (i.e. pas de support Qt)
-# solution: déclarer une variable d'env:
-#       os.environ["QT_QPA_PLATFORM"] = "offscreen"
+#!/usr/bin/env python3
+'''
+cas d'absence de session X (i.e. pas de support Qt)
+solution: déclarer une variable d'env:
+      os.environ["QT_QPA_PLATFORM"] = "offscreen"
+''' 
 import os
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
