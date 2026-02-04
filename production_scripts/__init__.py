@@ -7,3 +7,4 @@ if not display:# No graphical display available
     # solution: déclarer une variable d'env:
     #     os.environ["QT_QPA_PLATFORM"] = "offscreen"
     
+    

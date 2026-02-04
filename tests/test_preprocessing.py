@@ -4,8 +4,8 @@ cas d'absence de session X (i.e. pas de support Qt)
 solution: déclarer une variable d'env:
       os.environ["QT_QPA_PLATFORM"] = "offscreen"
 ''' 
-import os
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
+from os import environ
+environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from production_scripts import preprocess# The code to test
 import unittest # The test framework

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-
+from os import path
 from production_scripts import download_RNB_geojson_csv as rnb # The code to test
+import sgis.vector_tools as sgisvectools
 import unittest # The test framework
 
 TEST_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files/"
@@ -22,5 +23,21 @@ class Test_Downloading(unittest.TestCase):
         url=TEST_RNB_URL+filename
         rnb.get_csv_metadata(url)
         
+    def test_unzip(self):
+        filename="RNB_09.csv.zip"
+        zip_path=TEST_TARGET_FOLDER+filename
+        target=TEST_TARGET_FOLDER
+        self.assertTrue(path.exists(zip_path), f"{zip_path} not found. Execute once the following test: test_dowloading_RNB_09_csv") 
+        rnb.unzip(zip_path, TEST_TARGET_FOLDER)
+        unzipped_filename="RNB_09.csv"
+        self.assertTrue(path.exists(target+unzipped_filename))
+        
+    def test_loadVectorLayerFromGeojson(self):
+        filename="RNB_09.csv"
+        geojson_csv_file_path=TEST_TARGET_FOLDER+filename
+        self.assertTrue(path.exists(geojson_csv_file_path), f"{geojson_csv_file_path} not found. Execute once the following tests: \ntest_dowloading_RNB_09_csv \n test_unzip") 
+        layername=f'batiments_09'
+        raw_vector = sgisvectools.load_layer(geojson_csv_file_path, layername)
+            
 if __name__ == '__main__':
     unittest.main()
