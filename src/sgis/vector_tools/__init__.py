@@ -12,10 +12,10 @@ if not display:
 
 print(f"Graphical display available: {display}")
 
+
 from ._utils import copy_layer, export_csv, export_shp, load_layer
 from ._preprocessing import add_buffer_distance, remove_small_features, add_ID, add_XY_coordinates
 from ._external_data import add_protected_buildings, add_roof_type, merge_overlapped_buildings, update_on_ID
-# from ._geojson_reader import *
 from .._utils import clean_processing_folder
 
 __all__ = ['copy_layer', 'export_csv', 'export_shp', 'load_layer', 
