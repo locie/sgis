@@ -4,7 +4,7 @@ from qgis.core import (
     QgsVectorFileWriter
 )
 
-from .._init_qgis import processing, feedback, context
+from .._init_qgis import QgisManager #feedback, context not used here
 from .._utils import get_logger, prepare_paths
 
 def load_layer(full_path, layer_name):
@@ -139,16 +139,6 @@ def export_shp(layer, path, name):
                                               )
 
 
-def _export(layer, path):
-    processing.run(
-        "native:savefeatures",
-        {
-            'INPUT': layer,
-            'OUTPUT': path,
-        },
-        context=context,
-        feedback=feedback,
-    )
 
 
 
