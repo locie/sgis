@@ -21,15 +21,17 @@ mv ~/split/notes_$dep_$year.temp ~/split/$dep/$year/notes_${dep}
 #       os.environ["QT_QPA_PLATFORM"] = "offscreen"
 # non testé sur l'ensemble de sgis
 
-# from sgis.splitter import Splitter, clean_processing_folder
 
 from re import match
 from datetime import datetime
-from sgis.vector_tools import *
 from pathlib import Path
 from os import environ
 import argparse
 import sys
+from sgis.vector_tools import QgisManager
+# from sgis.vector_tools._utils import copy_layer, export_csv, export_shp, load_layer
+# from sgis.vector_tools._preprocessing import add_buffer_distance, remove_small_features, add_ID, add_XY_coordinates
+# from sgis.vector_tools._external_data import add_protected_buildings, add_roof_type, merge_overlapped_buildings, update_on_ID
 
 def die(msg):
     print(msg)
@@ -75,14 +77,16 @@ def main(dep, year, cadastre_dir, resolution=20):
         prefix = f'0{dep}'
     else:
         prefix = dep
-        
-    raw_vector = load_layer(vector_layer_path_raw, f'batiments_{dep}')
-    raw_vector = copy_layer(raw_vector)
-    preprocessed_vector, unwanted_buildings_number, initial_buildings_number = remove_small_features(raw_vector, min_area=10)
-    preprocessed_vector = add_buffer_distance(preprocessed_vector, distance=4)
-    preprocessed_vector = add_ID(preprocessed_vector, prefix=prefix)
-    preprocessed_vector = add_XY_coordinates(preprocessed_vector)
-    export_shp(preprocessed_vector, vector_layer_dir_preprocessed, name_preprocessed)
+    
+    qjis_mng = QgisManager()
+    # instantiate
+    raw_vector = qjis_mng.load_layer(vector_layer_path_raw, f'batiments_{dep}')
+    raw_vector = qjis_mng.copy_layer(raw_vector)
+    preprocessed_vector, unwanted_buildings_number, initial_buildings_number = qjis_mng.remove_small_features(raw_vector, min_area=10)
+    preprocessed_vector = qjis_mng.add_buffer_distance(preprocessed_vector, distance=4)
+    preprocessed_vector = qjis_mng.add_ID(preprocessed_vector, prefix=prefix)
+    preprocessed_vector = qjis_mng.add_XY_coordinates(preprocessed_vector)
+    qjis_mng.export_shp(preprocessed_vector, vector_layer_dir_preprocessed, name_preprocessed)
 
     with open(f'{output_root_path}/version_cadastre', 'w') as f:
         f.write(version_cadastre)
@@ -95,6 +99,8 @@ def main(dep, year, cadastre_dir, resolution=20):
     if attributes['ID'][:3] != prefix:
         attr = attributes['ID'][:3]
         raise NameError(f'Bad prefix for images. Expected {prefix} got {attr}.')
+    
+    qjis_mng.close()
 
 if __name__ == "__main__":
    # allows code to run only when the script is executed, not when it’s imported !

@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from .._utils import get_logger, prepare_paths
 from ..vector_tools import load_layer
-from .._init_qgis import QgisManager
+from ..vector_tools._qgis_manager import QgisManager
 
 
 

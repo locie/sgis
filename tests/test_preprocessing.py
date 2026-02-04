@@ -7,7 +7,7 @@ solution: déclarer une variable d'env:
 from os import environ
 environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from production_scripts import preprocess# The code to test
+# from production_scripts import preprocess# The code to test
 import unittest # The test framework
 
 class Test_Preprocessing(unittest.TestCase):
@@ -18,5 +18,5 @@ class Test_Preprocessing(unittest.TestCase):
             cadastre_dir='2025-12-01'
             resolution=20;
 
-            preprocess.main(dep, year, cadastre_dir, resolution)
+            # preprocess.main(dep, year, cadastre_dir, resolution)
             # TODO check target

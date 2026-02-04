@@ -1,13 +1,45 @@
-"""A small intro to `vector_tools`
-"""
-from ._utils import copy_layer, export_csv, export_shp, load_layer
-from ._preprocessing import add_buffer_distance, remove_small_features, add_ID, add_XY_coordinates
-from ._external_data import add_protected_buildings, add_roof_type, merge_overlapped_buildings, update_on_ID
-from .._utils import clean_processing_folder
+from os import environ
+display = environ.get("DISPLAY")
+if not display:# No graphical display available
+    environ["QT_QPA_PLATFORM"] = "offscreen"
+    # cas d'absence de session X (i.e. pas de support Qt)
+    # solution: déclarer une variable d'env:
+    #     os.environ["QT_QPA_PLATFORM"] = "offscreen"
+            
+from qgis.core import (
+    QgsApplication,
+    QgsProcessingContext,
+    QgsProcessingFeedback
+)
+from processing.core.Processing import Processing #bootstrap manager for QGIS Processing.
+from ._utils import load_layer
+        
 
-__all__ = ['copy_layer', 'export_csv', 'export_shp', 'load_layer', 
-           'add_buffer_distance', 'remove_small_features', 'add_ID', 'add_XY_coordinates',
-           'add_protected_buildings', 'add_roof_type', 'merge_overlapped_buildings', 'update_on_ID',
-           'clean_processing_folder']  # todo: need for doc automodule directive
+class QgisManager(object):
+    def __init__(self, prefix="/usr"):   
+        # MUST be first
+        # Without this, QGIS guesses paths. In debug runs the environment is often cleaner, so it “works”.
+        # In normal runs → provider registry loads garbage → 💥 segfault.
+        QgsApplication.setPrefixPath(prefix, True)
 
+        self.qgs = QgsApplication([], False)
+        self.qgs.initQgis()
 
+        # Processing AFTER initQgis
+        Processing.initialize()
+
+        self.context = QgsProcessingContext()
+        self.feedback = QgsProcessingFeedback()
+
+    def list_algorithms(self):
+        for alg in QgsApplication.processingRegistry().algorithms():
+            print(alg.id(), "->", alg.displayName())
+
+    def close(self):
+        # MUST be last
+        QgsApplication.exitQgis()
+        
+if __name__ == "__main__":
+    app = QgisManager()
+    app.list_algorithms()
+    app.close()

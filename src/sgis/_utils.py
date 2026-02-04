@@ -1,7 +1,6 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from shutil import rmtree
 from sys import stderr, stdout
 
 @lru_cache()
@@ -61,18 +60,3 @@ def prepare_paths(*paths, as_str=False):
     if len(new_paths) == 1:
         return new_paths[0]
     return new_paths
-
-def clean_processing_folder():
-    """Delete the content of the Qgis processing temporary folder. Use with caution.
-    """
-    from processing import getTempFilename
-    temp_filename = Path(getTempFilename())
-    processing_folder = temp_filename.parent
-    logger = get_logger()
-    if processing_folder.is_dir():
-        for path in processing_folder.iterdir():
-            if path.is_file():
-                path.unlink()
-            elif path.is_dir():
-                rmtree(path)
-        logger.info(f"Content of folder '{processing_folder}' was deleted.")

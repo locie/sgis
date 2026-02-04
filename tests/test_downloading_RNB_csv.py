@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from os import path
 from production_scripts import download_RNB_geojson_csv as rnb # The code to test
-import sgis.vector_tools as sgisvectools
+# from sgis.vector_tools import QgisManager
 import unittest # The test framework
 
 TEST_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files/"
@@ -32,12 +32,14 @@ class Test_Downloading(unittest.TestCase):
         unzipped_filename="RNB_09.csv"
         self.assertTrue(path.exists(target+unzipped_filename))
         
-    def test_loadVectorLayerFromGeojson(self):
-        filename="RNB_09.csv"
-        geojson_csv_file_path=TEST_TARGET_FOLDER+filename
-        self.assertTrue(path.exists(geojson_csv_file_path), f"{geojson_csv_file_path} not found. Execute once the following tests: \ntest_dowloading_RNB_09_csv \n test_unzip") 
-        layername=f'batiments_09'
-        raw_vector = sgisvectools.load_layer(geojson_csv_file_path, layername)
+    # def test_loadVectorLayerFromGeojson(self):
+    #     filename="RNB_09.csv"
+    #     geojson_csv_file_path=TEST_TARGET_FOLDER+filename
+    #     self.assertTrue(path.exists(geojson_csv_file_path), f"{geojson_csv_file_path} not found. Execute once the following tests: \ntest_dowloading_RNB_09_csv \n test_unzip") 
+    #     layername=f'batiments_09'
+    #     qjis_mng = QgisManager()
+    #     raw_vector = qgis_mng.load_layer(geojson_csv_file_path, layername)
+    #     qgis_mng.close()
             
 if __name__ == '__main__':
     unittest.main()

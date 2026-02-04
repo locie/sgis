@@ -4,10 +4,12 @@ from qgis.core import (
     QgsVectorFileWriter
 )
 
-from .._init_qgis import QgisManager #feedback, context not used here
 from .._utils import get_logger, prepare_paths
+from pathlib import Path
+from shutil import rmtree
 
-def load_layer(full_path, layer_name):
+
+def load_layer(self, full_path, layer_name):
     """Load a vector layer.
 
     Parameters
@@ -41,7 +43,7 @@ def load_layer(full_path, layer_name):
         return layer
 
 
-def copy_layer(layer, name=None):
+def copy_layer(self, layer, name=None):
     """Copy a layer in memory. 
     
     Parameters
@@ -72,7 +74,7 @@ def copy_layer(layer, name=None):
     copy_data.addFeatures(feats)
     return copy
 
-def export_csv(layer, full_path):
+def export_csv(self, layer, full_path):
     """Write the attribute table of a vector layer in a CSV file.
 
     Parameters
@@ -93,7 +95,7 @@ def export_csv(layer, full_path):
         raise AttributeError("`full_path` must be a 'CSV' file.")
     logger = get_logger()
     logger.info(f'Exporting layer as CSV: {full_path}')
-    _export(layer, full_path)
+    self._export(layer, full_path)
 
 def export_shp(layer, path, name):
     """Export a vector layer as an SHP file.
@@ -133,10 +135,24 @@ def export_shp(layer, path, name):
     logger = get_logger()
     logger.info(f'Exporting layer as SHP: {full_path}')
     QgsVectorFileWriter.writeAsVectorFormatV3(layer,
-                                              str(Path(full_path, name)),
-                                              QgsCoordinateTransformContext(),
-                                              options
-                                              )
+                                            str(Path(full_path, name)),
+                                            QgsCoordinateTransformContext(),
+                                            options
+                                            )
+def clean_processing_folder(self):
+    """Delete the content of the Qgis processing temporary folder. Use with caution.
+    """
+    temp_filename = Path(self.Processing.getTempFilename())
+    processing_folder = temp_filename.parent
+    logger = get_logger()
+    if processing_folder.is_dir():
+        for path in processing_folder.iterdir():
+            if path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                rmtree(path)
+        logger.info(f"Content of folder '{processing_folder}' was deleted.")
+
 
 
 
