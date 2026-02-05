@@ -526,3 +526,4 @@ TSWLatexianTemp*
 
 mydebugtools/sitecustomize.py
 remove-pycache.sh
+sitecustomize.py

@@ -12,11 +12,10 @@ from qgis.core import (
     QgsProcessingFeedback
 )
 from processing.core.Processing import Processing #bootstrap manager for QGIS Processing.
-from ._utils import load_layer, copy_layer, export_csv, export_shp
         
 
 class QgisManager():
-    def __init__(self, prefix="/usr"):   
+    def __init__(self, prefix="/thebaulm"):   
         # MUST be first
         # Without this, QGIS guesses paths. In debug runs the environment is often cleaner, so it “works”.
         # In normal runs → provider registry loads garbage → 💥 segfault.

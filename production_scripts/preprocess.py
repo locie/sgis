@@ -20,14 +20,23 @@ mv ~/split/notes_$dep_$year.temp ~/split/$dep/$year/notes_${dep}
 # solution: déclarer une variable d'env:
 #       os.environ["QT_QPA_PLATFORM"] = "offscreen"
 # non testé sur l'ensemble de sgis
-
+#!/usr/bin/env python3
+from os import environ
+display = environ.get("DISPLAY")
+if not display:# No graphical display available
+    environ["QT_QPA_PLATFORM"] = "offscreen"
+    # cas d'absence de session X (i.e. pas de support Qt)
+    # solution: déclarer une variable d'env:
+    #     os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from re import match
 from datetime import datetime
 from pathlib import Path
-from os import environ
 import argparse
+
+# Add src folder to path
 import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 from sgis.vector_tools import VectorTools
 
 
