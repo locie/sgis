@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-# '''
-# cas d'absence de session X (i.e. pas de support Qt)
-# solution: déclarer une variable d'env:
-#       os.environ["QT_QPA_PLATFORM"] = "offscreen"
-# ''' 
-# from os import environ
-# environ["QT_QPA_PLATFORM"] = "offscreen"
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent / "production_scripts"))

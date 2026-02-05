@@ -3,7 +3,7 @@ from qgis.core import edit
 from .._utils import get_logger
 from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
 
-class QgisPreporcessing:
+class QgisPreprocessing:
     def add_buffer_distance(self, layer, distance=4):
         """Increase the area of every feature of a layer by adding a buffer distance.
 
