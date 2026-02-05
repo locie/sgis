@@ -28,10 +28,8 @@ from pathlib import Path
 from os import environ
 import argparse
 import sys
-from sgis.vector_tools import QgisManager
-# from sgis.vector_tools._utils import copy_layer, export_csv, export_shp, load_layer
-# from sgis.vector_tools._preprocessing import add_buffer_distance, remove_small_features, add_ID, add_XY_coordinates
-# from sgis.vector_tools._external_data import add_protected_buildings, add_roof_type, merge_overlapped_buildings, update_on_ID
+from sgis.vector_tools import VectorTools
+
 
 def die(msg):
     print(msg)
@@ -78,15 +76,15 @@ def main(dep, year, cadastre_dir, resolution=20):
     else:
         prefix = dep
     
-    qjis_mng = QgisManager()
+    qgis_vec_tools = VectorTools()
     # instantiate
-    raw_vector = qjis_mng.load_layer(vector_layer_path_raw, f'batiments_{dep}')
-    raw_vector = qjis_mng.copy_layer(raw_vector)
-    preprocessed_vector, unwanted_buildings_number, initial_buildings_number = qjis_mng.remove_small_features(raw_vector, min_area=10)
-    preprocessed_vector = qjis_mng.add_buffer_distance(preprocessed_vector, distance=4)
-    preprocessed_vector = qjis_mng.add_ID(preprocessed_vector, prefix=prefix)
-    preprocessed_vector = qjis_mng.add_XY_coordinates(preprocessed_vector)
-    qjis_mng.export_shp(preprocessed_vector, vector_layer_dir_preprocessed, name_preprocessed)
+    raw_vector = qgis_vec_tools.load_layer(vector_layer_path_raw, f'batiments_{dep}')
+    raw_vector = qgis_vec_tools.copy_layer(raw_vector)
+    preprocessed_vector, unwanted_buildings_number, initial_buildings_number = qgis_vec_tools.remove_small_features(raw_vector, min_area=10)
+    preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, distance=4)
+    preprocessed_vector = qgis_vec_tools.add_ID(preprocessed_vector, prefix=prefix)
+    preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
+    qgis_vec_tools.export_shp(preprocessed_vector, vector_layer_dir_preprocessed, name_preprocessed)
 
     with open(f'{output_root_path}/version_cadastre', 'w') as f:
         f.write(version_cadastre)
@@ -100,7 +98,7 @@ def main(dep, year, cadastre_dir, resolution=20):
         attr = attributes['ID'][:3]
         raise NameError(f'Bad prefix for images. Expected {prefix} got {attr}.')
     
-    qjis_mng.close()
+    qgis_vec_tools.close()
 
 if __name__ == "__main__":
    # allows code to run only when the script is executed, not when it’s imported !

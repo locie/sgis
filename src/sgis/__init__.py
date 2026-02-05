@@ -9,4 +9,4 @@ It consists in 3 modules:
 - `classifier`: define a convolutional model, have it learn some classification skills and apply this classifier on unlabelled images datasets
 """
 
-# __all__ = ['qgis_manager']
+__all__ = ['qgis_manager','_gislayers']
