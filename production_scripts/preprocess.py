@@ -120,4 +120,4 @@ if __name__ == "__main__":
     parser.add_argument("--resolution", type=int, default=20, help='Raster resolution, in cm. Exported in `version_BDORTHO`.')
     args = parser.parse_args()
     
-    main(args) # args = [dep, year, cadastre_dir, resolution]
+    main(args.dep, args.year, args.cadastre_dir, args.resolution) # args = [dep, year, cadastre_dir, resolution]
