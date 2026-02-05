@@ -1,6 +1,7 @@
 
 from qgis.core import edit
 from .._utils import get_logger
+from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
 
 class QgisPreporcessing:
     def add_buffer_distance(self, layer, distance=4):
@@ -20,7 +21,7 @@ class QgisPreporcessing:
         """
         logger = get_logger()
         logger.info(f'Vectors buffering, with distance {distance} meters')
-        algresult = self.Processing.run(
+        algresult = processing.run(
             "native:buffer",
             {
                 'DISSOLVE': False,
@@ -56,7 +57,7 @@ class QgisPreporcessing:
         """
         # computing area: `with_area` is a shallow copy: different attributes but same geometry data/features
         logger = get_logger()
-        with_area = self.Processing.run("native:fieldcalculator",
+        with_area = processing.run("native:fieldcalculator",
                                     {
                                         'INPUT': layer,
                                         'OUTPUT': 'memory:',
@@ -70,7 +71,7 @@ class QgisPreporcessing:
                                     )['OUTPUT']
 
         # selecting features with small areas
-        self.Processing.run("qgis:selectbyattribute",
+        processing.run("qgis:selectbyattribute",
                         {'INPUT': with_area,
                         'FIELD': 'area',
                         'OPERATOR': 5,   # lower or equal
@@ -130,7 +131,7 @@ class QgisPreporcessing:
         # field_length = 11 : # max 10 million buildings + 3 letters for zip code
         logger = get_logger()
         logger.info('Adding IDs')
-        algresult = self.Processing.run("native:fieldcalculator",
+        algresult = processing.run("native:fieldcalculator",
                         {
                         'INPUT': layer,
                         'FIELD_NAME': 'ID',
@@ -167,7 +168,7 @@ class QgisPreporcessing:
         # x0 and y0 reference for Lambert-93: https://fr.wikipedia.org/wiki/Projection_conique_conforme_de_Lambert#/media/Fichier:Lambert_et_mercator_pour_wikipedia.svg
         logger = get_logger()
         logger.info("Adding 'X' field")
-        algresult = self.processing.run("native:fieldcalculator",
+        algresult = processing.run("native:fieldcalculator",
                         {'INPUT': layer,
                         'FIELD_NAME':'X',
                         'FIELD_TYPE':0,   # double
@@ -181,7 +182,7 @@ class QgisPreporcessing:
                         )
 
         logger.info("Adding 'Y' field")
-        algresult = self.processing.run("native:fieldcalculator",
+        algresult = processing.run("native:fieldcalculator",
                         {'INPUT': algresult['OUTPUT'],
                         'FIELD_NAME':'Y',
                         'FIELD_TYPE':0,     # double

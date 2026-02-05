@@ -97,7 +97,7 @@ class QgisUtils:
         logger.info(f'Exporting layer as CSV: {full_path}')
         self._export(layer, full_path)
 
-    def export_shp(layer, path, name):
+    def export_shp(self, layer, path, name):
         """Export a vector layer as an SHP file.
 
         Parameters
