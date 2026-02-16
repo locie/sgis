@@ -1,8 +1,11 @@
-from production_scripts import download_from_RNB_api as rnbapi# The code to test
+#!/usr/bin/env python3
+import test_setup # ignore unused import
 import unittest # The test framework
+from production_scripts import download_from_RNB_api as rnbapi# The code to test
 
-class Test_RNB_api(unittest.TestCase):
-      def test_RnbApiLimitation(self):
+
+class Test_rnb_api(unittest.TestCase):
+      def test_rnb_api_limitation(self):
         dept_code=75
         limit=101
         bbox='5.33, 45.00, 7.15, 46.00' 
