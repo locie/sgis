@@ -1,6 +1,6 @@
 # exemple appel:
 """
-Modify the raw cadastre layer of Etalab by:
+Modify the raw cadastre layer of RNB by:
 
 - adding a buffer distance around building (default 4m)
 - adding a unique ID to each building
@@ -10,17 +10,16 @@ Produced data is stored locally.
 
 example:
 
-activate_PV_detection;export QT_QPA_PLATFORM=offscreen;
-dep=10;year=2024;resolution=20;cadastre_dir=2026-01-01
-python ~/sgis/production_scripts/preprocess.py --dep $dep --year $year --cadastre_dir ${cadastre_dir} --resolution $resolution > ~/split/notes_$dep_$year.temp;
-cat ~/sgis/production_scripts/notes_template.txt >> ~/split/notes_$dep_$year.temp; 
-mv ~/split/notes_$dep_$year.temp ~/split/$dep/$year/notes_${dep}
+activate_PV_detection;
+export QT_QPA_PLATFORM=offscreen;
+
 """
 
 from re import match
 from datetime import datetime
 from pathlib import Path
 import argparse
+from production_scripts.target_folders_manager import TargetFoldersManager
 
 # Add src folder to path
 import sys
@@ -32,35 +31,12 @@ def die(msg):
     print(msg)
     sys.exit(1)
 
-# stuff to run always here such as class/def
-def main(dep, year, cadastre_dir, resolution=20):    
+# Fichiers en entree: les fichiers bruts du cadastre de RNB
+# https://www.data.gouv.fr/datasets/referentiel-national-des-batiments
+
+def main(dep):    
+    target_folders_mng = TargetFoldersManager(dep,"2026"); 
     
-
-
-    version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre Etalab')
-
-    # création des dossiers (fixme unsafe for Windows)
-    home = environ['HOME']       # requis pour s'adapter à Kheops ET à Cleo
-    vector_layer_path_raw =          rf'{home}/LaCie_thebaulm/gis/vectors/cadastre/{cadastre_dir}/unzipped/cadastre-{dep}-batiments-shp/batiments.shp'
-    name_preprocessed =                'batiments.shp'
-    raster_layers_path =             rf'{home}/temporary_LaCie/rasters/only_tiles/{dep}/{year}/{dep}-{year}-0M{resolution}-RGB'
-    output_root_path =               rf'{home}/split/{dep}/{year}'
-
-    output_directory_path =          rf'{output_root_path}/rasters'
-    vector_layer_dir_preprocessed =  rf'{output_root_path}/preprocessing/vectors'             
-    vector_layer_path_preprocessed = rf'{vector_layer_dir_preprocessed}/{name_preprocessed}'  
-
-
-    for p in (vector_layer_dir_preprocessed, output_directory_path):#
-        try:
-            Path(p).mkdir(parents=True) # `exist_ok=True` is useless here because p is a directory
-        except FileExistsError as e:
-            raise e
-
-    if not Path(vector_layer_path_raw).exists():
-        raise FileNotFoundError(f'Cadastre data not found in '
-                                f'{home}/LaCie_thebaulm/gis/vectors/cadastre/{cadastre_dir}/unzipped/cadastre-{dep}-batiments-shp')
-
     if len(dep)==2:
         prefix = f'0{dep}'
     else:
