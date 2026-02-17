@@ -1,7 +1,7 @@
 import argparse
 from unittest import case
 from production_scripts._preprocess_etalab import PreprocessEtalab
-# s_preprocess_rnb
+from production_scripts._preprocess_rnb import PreprocessRNB
 
 def main(data_type, dep, year, cadastre_dir, resolution):
      
@@ -12,8 +12,8 @@ def main(data_type, dep, year, cadastre_dir, resolution):
                   etalab_preprocess_instance.run()   
             case ("rnb"):
                   # RNB
-                  # TODO instantiate and run RNB preprocess
-                  pass   
+                  rnb_preprocess_instance = PreprocessRNB(dep, year, cadastre_dir, resolution)
+                  rnb_preprocess_instance.run()   
             case _:
                   raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
        

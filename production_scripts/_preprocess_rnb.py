@@ -11,11 +11,18 @@ class PreprocessRNB(VectorsPreprocess):
         self.year = year
         self.cadastre_dir = cadastre_dir
         self.resolution = resolution
+        try:
+            date = datetime.strptime(self.cadastre_dir, '%Y-%m-%d')
+        except ValueError as e:
+            print("\n\n Invalid date format. Expected YYYY-MM-DD:")
+            raise e
+
+        self.version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre Etalab')
         
         super().__init__(dep) # Appel du constructeur parent
         
         # IO files
-        self.vectors_layer_raw_path = Path(rf'{self.home_path}/LaCie_thebaulm/gis/vectors/cadastre/{self.cadastre_dir}/unzipped/cadastre-{self.dep_code}-batiments-shp/batiments.shp')
+        self.vectors_layer_raw_path = Path(rf'{self.home_path}/LaCie_thebaulm/gis/vectors/cadastre/{self.cadastre_dir}/unzipped/cadastre-{self.dep_code}-batiments-csv/RNB_{self.dep_code}.csv')
         self.preprocessed_buildings_layer_filename = 'batiments.shp'
         
     def check_params(self): #  checks input parameters before preprocessing
@@ -27,7 +34,7 @@ class PreprocessRNB(VectorsPreprocess):
             print("\n\n Invalid date format. Expected YYYY-MM-DD:")
             raise e
 
-        self.version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre Etalab')
+        self.version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre RNB')
         
         if not Path(self.vectors_layer_raw_path).exists():
-            raise FileNotFoundError(f'Etalab cadastre data not found in {self.vector_layer_raw_path.parent()}')
+            raise FileNotFoundError(f'RNB cadastre data not found in {self.vector_layer_raw_path.parent()}')

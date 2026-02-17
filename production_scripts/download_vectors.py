@@ -87,8 +87,8 @@ def main(data_type : str, dep_code : str, date = "yyyy-mm-dd"):
     sha1_of_zip_file = download_file(url, zip_file_path)
     
     print(f"Downloading is finished of {url} - sha1: {sha1_of_zip_file}")
-    system(f"tree {rootp}")
     unzip(zip_file_path, unzipped_dir)
+    system(f"tree {rootp}")
 
 def download_file(url, output_path, chunk_size=CHUNCK_SIZE):
     """
@@ -127,7 +127,6 @@ def get_csv_metadata(url : str) -> Dict:
     try:
         r = requests.head(url)
         r.raise_for_status()
-        print(r.headers)
         metadata = {
             "content_length": r.headers.get("Content-Length"), 
             "last_modified": r.headers.get("Last-Modified"),

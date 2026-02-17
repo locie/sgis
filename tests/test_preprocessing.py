@@ -14,3 +14,12 @@ class Test_Preprocessing(unittest.TestCase):
             resolution=20;
             print('')
             preprocess.main('etalab',dep, year, cadastre_dir, resolution)
+      
+      def test_preprocess_rnb_cadastre_09(self):
+            # input params
+            dep='09';
+            year='2026';
+            cadastre_dir='2026-02-14'
+            resolution=20;
+            print('')
+            preprocess.main('rnb',dep, year, cadastre_dir, resolution)

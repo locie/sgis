@@ -33,9 +33,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
             else:
                   self.prefix = dep_code
             
-            # vérification des paramètres
-            self.check_params()
-            
             # chemins de destination des données prétraitées
             self.output_dir_path = rf'{self.home_path}/split/{self.dep_code}/{self.year}'
             self.output_rasters_dir_path = rf'{self.output_dir_path}/rasters'
@@ -65,6 +62,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
             preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
             preprocessed_vector = qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
             preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
+            # self.export_vectors(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
             qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
 
             with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:
@@ -79,4 +77,9 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   attr = attributes['ID'][:3]
                   raise NameError(f'Bad prefix for images. Expected {self.prefix} got {attr}.')
 
-            qgis_vec_tools.close()            
+            qgis_vec_tools.close()  
+     
+      # @abstractmethod      
+      # def export_vectors(self, preprocessed_vector, output_vector_layer_dir_path, preprocessed_buildings_layer_filename):
+      #       pass
+                      

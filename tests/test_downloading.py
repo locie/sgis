@@ -30,6 +30,16 @@ class Test_Downloading(unittest.TestCase):
     def test_download_etalab(self):
         rnb.main("etalab","09","2025-12-01")
         
+    # def test_download_01_to_08_dept_rnb(self):
+    #     rnb.main("rnb","01","2025-12-01")
+    #     rnb.main("rnb","02","2025-12-01")
+    #     rnb.main("rnb","03","2025-12-01")
+    #     rnb.main("rnb","04","2025-12-01")
+    #     rnb.main("rnb","05","2025-12-01")
+    #     rnb.main("rnb","06","2025-12-01")
+    #     rnb.main("rnb","07","2025-12-01")
+    #     rnb.main("rnb","08","2025-12-01")
+        
     def test_read_metadata(self):
         filename="RNB_09.csv.zip"
         url=TEST_RNB_URL+filename
