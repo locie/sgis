@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import test_setup as ts
 import unittest # The test framework
-from production_scripts.target_folders_manager import TargetFoldersManager
+from production_scripts.scan_io_folders import scan_cadastre_vectors_folder
 
 class Test_scan_results(unittest.TestCase):
-  def test_scan_results_folders(self):
-    dep='09';
-    year='2025';
-    target_folders_manager = TargetFoldersManager(dep, year)
-    # target_folders_manager.scan_target_folders()
-    target_folders_manager.scan_cadastre_vectors_folder()
+  def test_scan_etalab_cadastre_vectors_folder(self):
+    scan_cadastre_vectors_folder("etalab")
+    
+  def test_scan_rnb_cadastre_vectors_folder(self):
+    scan_cadastre_vectors_folder("rnb")

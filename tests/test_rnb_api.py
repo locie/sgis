@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import test_setup as ts
 import unittest # The test framework
-from production_scripts import download_from_RNB_api as rnbapi# The code to test
-import production_scripts.get_rnb_modifications as trackchanges
+from production_scripts import rnb_geo_api as rnbapi # The code to test
+import production_scripts.rnb_geo_api as trackchanges
 
 class Test_rnb_api(unittest.TestCase):
   def test_rnb_api_limit(self):

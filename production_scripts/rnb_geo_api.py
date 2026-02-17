@@ -3,60 +3,42 @@ from datetime import datetime, timezone
 from typing import Optional, Dict
 import pandas as pd
 from io import StringIO
+import json
 
 GEO_API_URL = "https://geo.api.gouv.fr/departements"
 RNB_DIFF_URL = "https://rnb-api.beta.gouv.fr/api/alpha/buildings/diff/"
 MIN_ALLOWED_DATE = datetime(2024, 4, 1, tzinfo=timezone.utc)
-
-"""
-Récupère les modifications du Référentiel National des Bâtiments (RNB)
-depuis une date donnée via l'API officielle.
-
-Paramètres
-----------
-since : str
-    Date et heure au format ISO 8601 (ex: "2024-04-02T00:00:00Z").
-    Seules les dates postérieures au 1er avril 2024 sont acceptées.
-
-insee_code : str, optionnel
-    Code INSEE de la commune (5 caractères).
-    Si fourni, seules les modifications concernant les bâtiments
-    intersectant cette commune seront retournées.
-
-timeout : int, optionnel
-    Temps maximum d’attente de la requête HTTP en secondes (défaut: 30).
-
-Retour
-------
-List[Dict]
-    Liste des objets bâtiments modifiés depuis la date spécifiée.
-    Chaque élément correspond à un bâtiment retourné par l’API.
-
-Exceptions
-----------
-ValueError :
-    - Si la date n'est pas valide
-    - Si la date est antérieure au 1er avril 2024
-    - Si le code INSEE n’est pas valide
-
-requests.HTTPError :
-    Si l’API retourne une erreur HTTP.
-
-Exemple
--------
->>> mods = get_rnb_modifications(
-...     since="2024-05-01T00:00:00Z",
-...     insee_code="75056"
-... )
->>> print(len(mods))
-"""
+LIMIT = 100
 
 def get_rnb_modifications(
     since: str,
     insee_code: Optional[str] = None,
     timeout: int = 30
 ) -> pd.DataFrame:
+    """
+    Récupère les modifications du Référentiel National des Bâtiments (RNB)
+    depuis une date donnée via l'API officielle.
 
+    Paramètres
+    ----------
+    since : str
+        Date et heure au format ISO 8601 (ex: "2024-04-02T00:00:00Z").
+        Seules les dates postérieures au 1er avril 2024 sont acceptées.
+
+    insee_code : str, optionnel
+        Code INSEE de la commune (5 caractères).
+        Si fourni, seules les modifications concernant les bâtiments
+        intersectant cette commune seront retournées.
+
+    timeout : int, optionnel
+        Temps maximum d’attente de la requête HTTP en secondes (défaut: 30).
+
+    Retour
+    ------
+    List[Dict]
+        Liste des objets bâtiments modifiés depuis la date spécifiée.
+        Chaque élément correspond à un bâtiment retourné par l’API.
+    """
     # Validation de la date
     try:
         parsed_date = datetime.fromisoformat(
@@ -159,4 +141,71 @@ def get_rnb_modifications_by_departement(dep: str, since: str)-> pd.DataFrame:
         dfs.append(df)  
     df_final = pd.concat(dfs, ignore_index=True)  
     return df_final
+
+def get_dept_buildings_geojson(dept_code):
+	#Probleme de cette approche la limite imposee sur le nombre de batiments 
+	'''limit
+	integer · min: 1 · max: 100
+	Nombre maximum de bâtiments à retourner dans la page de résultats. Valeur par défaut : 20. Valeur maximale : 100.
+	Default: 20'''
+	# cf.Paramètres de requête décrite ici : https://rnb-fr.gitbook.io/documentation/api-et-outils/api-batiments/lister-des-batiments
+
+	# liste des communes du département
+	try:
+		resp_communes = requests.get("https://geo.api.gouv.fr/departements/75/communes")
+		communes = resp_communes.json()
+
+		all_features = []
+		# pour chaque commune, récupérer les bâtiments
+		for commune in communes:
+			insee = commune["code"]
+			# par commune
+			url = f"https://rnb-api.beta.gouv.fr/api/alpha/buildings/?insee_code={insee}&format=geojson&limit={LIMIT}"
+			while url:
+				r = requests.get(url)
+				r.raise_for_status()
+				data=r.json()
+				all_features += data.get("features", [])
+				# TODO pagination eventuelle 
+				# url = data.get("links", {}).get("next")
+				url = []
+
+		# résultat final en GeoJSON
+		result_geojson = {
+			"type": "FeatureCollection",
+			"features": all_features
+		}
+	except requests.exceptions.HTTPError as e:
+		print("HTTP error occurred")
+		print("Status:", e.response.status_code)
+		print("Message:", e.response.text)
+
+	except requests.exceptions.RequestException as e:
+		print("Request failed:", e)
+
+ 
+def get_bbox_buildings_geojson(bbox, limit):
+	try:
+		all_features = []
+		url = f"https://rnb-api.beta.gouv.fr/api/alpha/buildings/?bbox={bbox}&format=geojson&limit={limit}"
+
+
+		r = requests.get(url)
+		r.raise_for_status()
+		data=r.json()
+		all_features += data.get("features", [])
+
+		# resultat final en GeoJSON
+		result_geojson = {
+			"type": "FeatureCollection",
+			"features": all_features}
+
+	except requests.exceptions.HTTPError as e:
+		print("HTTP error occurred")
+		print("Status:", e.response.status_code)
+		print("Message:", e.response.text)
+
+	except requests.exceptions.RequestException as e:
+		print("Request failed:", e)
+
     
