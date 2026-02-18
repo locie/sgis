@@ -64,7 +64,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
             preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
             preprocessed_vector = qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
             preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
-            # self.export_vectors(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
             qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
 
             with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:

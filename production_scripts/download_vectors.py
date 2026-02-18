@@ -9,6 +9,7 @@ from pathlib import Path
 import hashlib
 import json
 from os import system
+import pandas as pd
 
 CADASTRE_FOLDER_PATH="LaCie_thebaulm/gis/vectors/cadastre"
 BASE_ETALAB_URL="https://cadastre.data.gouv.fr/data/etalab-cadastre" # etalab
@@ -37,8 +38,6 @@ def die(msg):
 def main(data_type : str, dep_code : str, date = "yyyy-mm-dd"):
     
     # construction des repertoires de destination
-    
-    
     # nom du fichier de vecteurs raw layer
     if(data_type == "etalab"):
         raw_dirname = f"cadastre-{dep_code}-batiments-shp"
@@ -54,8 +53,7 @@ def main(data_type : str, dep_code : str, date = "yyyy-mm-dd"):
         date = get_rnb_date(url)
         output_filename = rnb_param["output_filename"]
         zip_filename = rf"{output_filename}.zip"
-        
-        
+         
     else:
         raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
     # end if
@@ -88,6 +86,14 @@ def main(data_type : str, dep_code : str, date = "yyyy-mm-dd"):
     
     print(f"Downloading is finished of {url} - sha1: {sha1_of_zip_file}")
     unzip(zip_file_path, unzipped_dir)
+    
+    # TODO ajouter si possible des verifications sur l'integrite des donnees ici
+    
+    if(data_type == "rnb"):
+        # NOTE ⚠ IMPORTANT : Nettoie la colonne "shape" avant traitement
+        # Suppression de 'SRID=4326;' dans la colonne "shape" WKT Multipolygone
+        fix_shape_column_for_qgis(unzipped_file_path)
+        
     system(f"tree {rootp}")
 
 def download_file(url, output_path, chunk_size=CHUNCK_SIZE):
@@ -161,10 +167,29 @@ def build_etalab_param(dep_code : str, date : str) -> Dict:
     }
     return etalab_param
 
+# ============================================================
+# ⚠ IMPORTANT : Nettoyer le champ WKT avant traitement
+# ============================================================
+def fix_shape_column_for_qgis(csv_path : str):
+    '''
+    Cette fonction modifie le fichier CSV d’entrée directement en supprimant les déclarations SRID=4326
+    des chaînes de géométrie WKT (Well-Known Text). Les préfixes SRID peuvent provoquer des problèmes
+    lors de l’importation des géométries dans QGIS ; cette étape de prétraitement garantit donc la compatibilité.
+    '''
+    # Load CSV
+    df = pd.read_csv(csv_path, sep=';')
+
+    # Remove 'SRID=4326;' from the WKT column
+    # Replace "shape" with your actual WKT column name
+    df['shape'] = df['shape'].str.replace(r'^SRID=4326;', '', regex=True)
+
+    # Save cleaned CSV (optional)
+    df.to_csv(csv_path, index=False)
+
 
 def get_rnb_date(url: str):
     '''
-    recupere la date de derniere modification
+    recupere la date de derniere modification du fichier de données RNB téléchargé
     '''
     metadata = get_csv_metadata(url)
     dt = datetime.strptime(metadata.get("last_modified"), "%a, %d %b %Y %H:%M:%S GMT")

@@ -33,14 +33,29 @@ class QgisUtils:
         Modifications of the layer may propagate to the original file on disk.
 
         """
+        extension = Path(full_path).suffix
         full_path = prepare_paths(full_path, as_str=True)
+
         logger = get_logger()
         logger.debug(f"Loading layer at {full_path}")
-        layer = QgsVectorLayer(full_path, layer_name, "ogr")
+        
+        if(extension==".shp"):
+            # WKT shape file (Etalab)
+            layer = QgsVectorLayer(full_path, layer_name, "ogr")
+        elif(extension==".csv"):
+            # csv format (RNB)
+            uri = "file://{}?delimiter={}&crs=epsg:4326&wktField={}".format(full_path, ",", "shape")
+            layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
+        else:
+            raise ValueError(f'Unsupported file format: {extension}')
+            
+        # some verifications
         if not layer.isValid():
             raise ValueError('Layer failed to load!')
-        else:
-            return layer
+        if not layer.isSpatial():
+            print(layer.wkbType())  
+            raise ValueError('The layer is just a table: you have to create the geometry!')
+        return layer
 
 
     def copy_layer(self, layer, name=None):

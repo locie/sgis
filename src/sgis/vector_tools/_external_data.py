@@ -5,7 +5,7 @@ from qgis.core import (QgsGeometry,
                        edit,
                        QgsField
                        )
-
+from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
 from .._utils import get_logger, prepare_paths
 
 class QgisExternalData:
@@ -46,7 +46,7 @@ class QgisExternalData:
         logger = get_logger()
 
         logger.info("Reprojecting protected buildings")
-        result = self.processing.run("native:reprojectlayer",
+        result = processing.run("native:reprojectlayer",
                                             {'INPUT': layer_protected_buildings,
                                             'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:2154'),  # fixme: EPSGH:2154 is only valid if preprocessed layer is this one too
                                             'OPERATION':'+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80',
@@ -54,7 +54,7 @@ class QgisExternalData:
         layer_protected_buildings_reprojected = result["OUTPUT"]        # no garbage collection, see https://gis.stackexchange.com/questions/284064/using-memory-layer-for-processing-algorithms-in-qgis-3
 
         logger.info("Joining by location")
-        result = self.processing.run("native:joinattributesbylocation",   # doc: https://docs.qgis.org/3.34/en/docs/user_manual/processing_algs/qgis/vectorgeneral.html#join-attributes-by-location
+        result = processing.run("native:joinattributesbylocation",   # doc: https://docs.qgis.org/3.34/en/docs/user_manual/processing_algs/qgis/vectorgeneral.html#join-attributes-by-location
                                         {'INPUT': layer,
                                         'PREDICATE':[0],
                                         'JOIN': layer_protected_buildings_reprojected,
@@ -157,7 +157,7 @@ class QgisExternalData:
                         header=0,
                         usecols=['batiment_groupe_id', 'mat_toit_txt'])
 
-        logger.info('Processing roof type information')
+        logger.info('processing roof type information')
 
         # post-code: first 5 characters, a priori
         df['batiment_groupe_id'] = df['batiment_groupe_id'].str[:5]
@@ -232,7 +232,7 @@ class QgisExternalData:
             layer.setSubsetString(f'"{reference_field_name}" >= {min_field_value}')
 
             
-        result = self.Processing.run("native:multiintersection",
+        result = processing.run("native:multiintersection",
                                 {'INPUT': layer,
                                     'OVERLAYS': [layer],
                                     'OVERLAY_FIELDS_PREFIX': '',
@@ -443,7 +443,7 @@ class QgisExternalData:
         #                 feature[col_name] = value
         #                 layer.updateFeature(feature)
     def _export(self, layer, path):
-        self.Processing.run(
+        processing.run(
             "native:savefeatures",
             {
                 'INPUT': layer,

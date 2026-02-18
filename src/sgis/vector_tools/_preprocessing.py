@@ -2,6 +2,7 @@
 from qgis.core import edit
 from .._utils import get_logger
 from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
+from qgis.core import QgsCoordinateReferenceSystem
 
 class QgisPreprocessing:
     def add_buffer_distance(self, layer, distance=4):
@@ -57,13 +58,24 @@ class QgisPreprocessing:
         """
         # computing area: `with_area` is a shallow copy: different attributes but same geometry data/features
         logger = get_logger()
+
+        # Reprojection is mandatory because $area in EPSG:4326 (lon/lat) gives square degrees
+        reprojected_layer = processing.run(
+            "native:reprojectlayer",
+            {
+                'INPUT': layer,
+                'TARGET_CRS': QgsCoordinateReferenceSystem("EPSG:2154"),
+                'OUTPUT': 'memory:'
+            }
+        )['OUTPUT']
+        
         with_area = processing.run("native:fieldcalculator",
                                     {
-                                        'INPUT': layer,
+                                        'INPUT': reprojected_layer,
                                         'OUTPUT': 'memory:',
                                         'FIELD_NAME': 'area',
                                         'FIELD_TYPE': 0,     # double, yet of precision 0 hence int
-                                        'FIELD_LENGTH': 11,
+                                        'FIELD_LENGTH': 20,
                                         'FORMULA': 'area(@geometry)',
                                     },
                                     context=self.context,
