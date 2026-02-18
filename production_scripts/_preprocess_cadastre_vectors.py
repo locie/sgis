@@ -43,9 +43,11 @@ class VectorsPreprocess(ABC): # Classe abstraite
             self.raster_layers_dir_path = rf'{self.home_path}/temporary_LaCie/rasters/only_tiles/{self.dep_code}/{self.year}/{self.dep_code}-{self.year}-0M{self.resolution}-RGB'
             
             
-      @abstractmethod
-      def check_params(self):# implémenter dans les classes filles
-            pass
+      def check_params(self): #  checks input parameters before preprocessing
+        assert ((len(self.dep_code)==2) or (len(self.dep_code)==3 and self.dep[0]=='9'))
+        assert self.resolution in range(1, 100)
+        if not Path(self.vectors_layer_raw_path).exists():
+            raise FileNotFoundError(f'Cadastre data not found in {self.vector_layer_raw_path.parent()}')
       
       def create_output_dirs(self):
             try:
