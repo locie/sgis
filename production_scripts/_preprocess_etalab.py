@@ -26,5 +26,15 @@ class PreprocessEtalab(VectorsPreprocess):
         # vérification des paramètres
         self.check_params()
         
-    def export_vectors(self, preprocessed_vector, output_vector_layer_dir_path, preprocessed_buildings_layer_filename):
-        qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
+    def update_fields(self, preprocessed_vector):   
+        """
+        Add ID
+        """ 
+        return self.qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
+        
+    def final_check(self, preprocessed_vector):
+        # vérification que les attributs sont les bons, par exemple code dep sur 3 digits
+        attributes = preprocessed_vector.getFeature(500).attributeMap()
+        if attributes['ID'][:3] != self.prefix:
+                attr = attributes['ID'][:3]
+                raise NameError(f'Bad prefix for images. Expected {self.prefix} got {attr}.')

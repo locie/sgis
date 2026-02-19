@@ -1,7 +1,8 @@
 from qgis.core import (
     QgsVectorLayer,
     QgsCoordinateTransformContext,
-    QgsVectorFileWriter
+    QgsVectorFileWriter,
+    QgsWkbTypes
 )
 
 from .._utils import get_logger, prepare_paths
@@ -44,17 +45,19 @@ class QgisUtils:
             layer = QgsVectorLayer(full_path, layer_name, "ogr")
         elif(extension==".csv"):
             # csv format (RNB)
-            uri = "file://{}?delimiter={}&crs=epsg:4326&wktField={}".format(full_path, ",", "shape")
+            uri = "file://{}?delimiter={}&crs=epsg:4326&wktField={}&geomType=Multipolygon".format(full_path, ",", "shape")
             layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
         else:
             raise ValueError(f'Unsupported file format: {extension}')
             
-        # some verifications
+        # Test loading layer
         if not layer.isValid():
             raise ValueError('Layer failed to load!')
-        if not layer.isSpatial():
-            print(layer.wkbType())  
-            raise ValueError('The layer is just a table: you have to create the geometry!')
+        else:
+            # Test if the layer contains the geometries
+            if not layer.isSpatial():
+                print(layer.wkbType())  
+                raise ValueError('The layer is just a table: you have to create the geometry!')
         return layer
 
 
@@ -167,13 +170,6 @@ class QgisUtils:
                 elif path.is_dir():
                     rmtree(path)
             logger.info(f"Content of folder '{processing_folder}' was deleted.")
-
-
-
-
-
-
-
 
     # Useful Qgis functions:
     # # show all processing algorithms

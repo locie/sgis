@@ -13,14 +13,15 @@ class Test_rnb_api(unittest.TestCase):
     rnbapi.get_dept_buildings_geojson(dept_code) 
     rnbapi.get_bbox_buildings_geojson(bbox, limit)
   
-  @unittest.skip("Temporarily disabled") 
-  def test_track_changes_since_date(self):
-    since="2025-10-04T13:28:38Z"
-    all_changes_df = trackchanges.get_rnb_modifications(since)
-    print(f"Nombre de modifications depuis {since} : {len(all_changes_df)}")
-  
-  # Fonctionne mais trop lente : 1 requete par commune
+    @unittest.skip("Temporairement désactivé car test long")
+    def test_track_changes_since_date(self):
+      since="2025-10-04T13:28:38Z"
+      all_changes_df = trackchanges.get_rnb_modifications(since)
+      print(f"Nombre de modifications depuis {since} : {len(all_changes_df)}")
+    
+  # @unittest.skip("Temporairement désactivé car test long")
   # def test_track_changes_for_all_departments(self):
+  # Fonctionne mais trop lente : 1 requete par commune
   #   since="2026-01-04T13:28:38Z"
   #   results = get_rnb_modifications_for_all_departments(since)
   #   print(f"Nombre de departements traites : {len(results)}")
@@ -31,7 +32,7 @@ class Test_rnb_api(unittest.TestCase):
   #       print(f"Nombre de modifications pour le departement {dep} : {len(df)}")
   #       f.write(f"Nombre de modifications pour le departement {dep} : {len(df)}\n")
   
-  @unittest.skip("Temporarily disabled")
+  @unittest.skip("Temporairement désactivé car test long")
   def test_track_changes_for_1_departement(self):
     dept_code="02"
     since="2025-10-04T13:28:38Z"

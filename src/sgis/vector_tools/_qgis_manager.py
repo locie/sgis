@@ -9,7 +9,8 @@ if not display:# No graphical display available
 from qgis.core import (
     QgsApplication,
     QgsProcessingContext,
-    QgsProcessingFeedback
+    QgsProcessingFeedback,
+    Qgis
 )
 from processing.core.Processing import Processing #bootstrap manager for QGIS Processing.
         
@@ -29,16 +30,31 @@ class QgisManager():
 
         self.context = QgsProcessingContext()
         self.feedback = QgsProcessingFeedback()
-
+    
+    def catch_qgis_messages_enable(self):
+        # referencing before assignment
+        def _catch_qgis_messages(message, tag, level):
+            if level == Qgis.Info: type="Info"
+            elif level == Qgis.Warning: type="Warning"
+            elif level == Qgis.Critical: type="Critical"
+            elif level == Qgis.Success: type="Success"
+            else: type="unknown message type"
+            print(f"[QGIS] - [{type}] - {tag}: {message}")
+        # enable catching qgis messages
+        print("QGIS messageLog is now connected.")                  
+        self.qgs.messageLog().messageReceived.connect(_catch_qgis_messages)
+      
     def list_algorithms(self):
-        for alg in QgsApplication.processingRegistry().algorithms():
+        for alg in self.qgs.processingRegistry().algorithms():
             print(alg.id(), "->", alg.displayName())
 
-    def close(self):
+    def _close(self):
         # MUST be last
-        QgsApplication.exitQgis()
+        self.qgs.exitQgis()
         
+    def __del__(self):
+        self._close() 
+             
 if __name__ == "__main__":
     app = QgisManager()
     app.list_algorithms()
-    app.close()

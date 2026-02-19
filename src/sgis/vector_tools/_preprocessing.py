@@ -1,8 +1,9 @@
 
-from qgis.core import edit
 from .._utils import get_logger
+from qgis.core import QgsCoordinateReferenceSystem, QgsField, QgsFields, edit
 from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
-from qgis.core import QgsCoordinateReferenceSystem
+from PyQt5.QtCore import QVariant
+
 
 class QgisPreprocessing:
     def add_buffer_distance(self, layer, distance=4):
@@ -58,20 +59,26 @@ class QgisPreprocessing:
         """
         # computing area: `with_area` is a shallow copy: different attributes but same geometry data/features
         logger = get_logger()
-
-        # Reprojection is mandatory because $area in EPSG:4326 (lon/lat) gives square degrees
-        reprojected_layer = processing.run(
-            "native:reprojectlayer",
-            {
-                'INPUT': layer,
-                'TARGET_CRS': QgsCoordinateReferenceSystem("EPSG:2154"),
-                'OUTPUT': 'memory:'
-            }
-        )['OUTPUT']
+        
+        # get the EPSG code of a layer’s projection (CRS)
+        # NOTE RGF93 v1 / Lambert-93 corresponds to EPSG:2154
+        epsg = layer.crs().authid() # Attention pour le cadastre etalab le champ epsg est vide '' alors qu'il devrait retourner 'EPSG:2154'
+        
+        if(epsg=="EPSG:4326"):
+            # Typiquement ces des géométries RNB définies dans le systeme de projection EPSG:4326
+            # La reprojection est obligatoire de EPSG:4326 (lon/lat) vers EPSG:2154 pour les calculs de preprocessing
+            layer = processing.run(
+                "native:reprojectlayer",
+                {
+                    'INPUT': layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem("EPSG:2154"),
+                    'OUTPUT': 'memory:'
+                }
+            )['OUTPUT']
         
         with_area = processing.run("native:fieldcalculator",
                                     {
-                                        'INPUT': reprojected_layer,
+                                        'INPUT': layer,
                                         'OUTPUT': 'memory:',
                                         'FIELD_NAME': 'area',
                                         'FIELD_TYPE': 0,     # double, yet of precision 0 hence int
@@ -99,7 +106,7 @@ class QgisPreprocessing:
         with edit(with_area):
             with_area.deleteSelectedFeatures()
         logger.info(
-                '{0} buildings out of {1}, smaller than {2} m2, removed'.format(
+                '{0} buildings out of {1}, smaller than {2}m², removed'.format(
                 unwanted_buildings_number,
                 initial_buildings_number,
                 min_area
@@ -207,3 +214,46 @@ class QgisPreprocessing:
                         feedback=self.feedback,
                         )
         return algresult['OUTPUT'] # shallow copy: different attributes but same geometry data/features as layer
+    
+    def remove_fields(self, layer, fields_to_remove : list[str]):
+        logger = get_logger()
+        logger.info(rf"Removing  fields ({fields_to_remove})")
+        for f in fields_to_remove:
+            idx = layer.fields().indexOf(f)
+            if idx != -1:
+                # Delete the field
+                layer.dataProvider().deleteAttributes([idx])
+                layer.updateFields()  # Refresh layer fields
+                # print(f"Field '{f}' removed successfully.")
+
+        # Commit changes
+        layer.commitChanges()
+    
+    def refactor_field_width(self, layer, fields_to_refactor, length = 254):
+        logger = get_logger()
+        logger.info(rf"Truncating fields ({fields_to_refactor}) to {length} characters")
+        # Create new fields with modified length
+        new_fields = QgsFields()
+        for field in layer.fields():
+            if field.name() in fields_to_refactor:
+                # Create a new string field with desired length (e.g., 100)
+                new_fields.append(QgsField(field.name(), QVariant.String, field.typeName(), length))
+            else:
+                # Keep other fields as they are
+                new_fields.append(field)
+
+        algresult = processing.run(
+                "native:refactorfields",
+                {
+                    'INPUT': layer,
+                    'FIELDS_MAPPING': [
+                        {'expression': f'"{f.name()}"', 'length': f.length(), 'name': f.name(), 'precision': f.precision(), 'type': f.type()} 
+                        for f in new_fields
+                    ],
+                    'OUTPUT': 'memory:'
+                },
+                    context=self.context,
+                    feedback=self.feedback,
+            )
+        return algresult['OUTPUT'] # shallow copy: different attributes but same geometry data/features as layer
+

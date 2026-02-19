@@ -24,21 +24,22 @@ class Test_Downloading(unittest.TestCase):
         unzipped_filename="RNB_09.csv"
         self.assertTrue(path.exists(target+unzipped_filename))    
         
-    def test_download_rnb(self):
+    def test_download_rnb_cadastre_09(self):
         rnb.main("rnb","09")
         
-    def test_download_etalab(self):
+    def test_download_etalab_cadastre_09(self):
         rnb.main("etalab","09","2025-12-01")
-        
-    # def test_download_01_to_08_dept_rnb(self):
-    #     rnb.main("rnb","01","2025-12-01")
-    #     rnb.main("rnb","02","2025-12-01")
-    #     rnb.main("rnb","03","2025-12-01")
-    #     rnb.main("rnb","04","2025-12-01")
-    #     rnb.main("rnb","05","2025-12-01")
-    #     rnb.main("rnb","06","2025-12-01")
-    #     rnb.main("rnb","07","2025-12-01")
-    #     rnb.main("rnb","08","2025-12-01")
+    
+    @unittest.skip("Temporairement désactivé car test long")
+    def test_download_cadastre_01_to_08(self):
+        rnb.main("rnb","01","2025-12-01")
+        rnb.main("rnb","02","2025-12-01")
+        rnb.main("rnb","03","2025-12-01")
+        rnb.main("rnb","04","2025-12-01")
+        rnb.main("rnb","05","2025-12-01")
+        rnb.main("rnb","06","2025-12-01")
+        rnb.main("rnb","07","2025-12-01")
+        rnb.main("rnb","08","2025-12-01")
         
     def test_read_metadata(self):
         filename="RNB_09.csv.zip"

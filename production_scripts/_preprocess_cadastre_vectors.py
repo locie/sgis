@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from os import environ
 from sgis.vector_tools import VectorTools
-
+from sys import gettrace as sys_gettrace
 
 BASE_DIR="LaCie_thebaulm" # Nom du dossier de stockage des donnees d'entree et de sortie à la racine du home de l'utilisateur
 RESOLUTION=20
@@ -24,6 +24,10 @@ class VectorsPreprocess(ABC): # Classe abstraite
       preprocessed_buildings_layer_filename : str
       
       def __init__(self, dep_code, resolution = RESOLUTION):
+            
+            # crée une instance de VectorTools
+            self.qgis_vec_tools = VectorTools()
+            
             # paramètres d'entrée communs à Etalab et RNB
             self.dep_code = dep_code
             self.home_path = environ['HOME']
@@ -55,32 +59,46 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   Path(self.output_vector_layer_dir_path).mkdir(parents=True)
             except FileExistsError as e:
                   raise e
-    
+            
       def run(self):
-            qgis_vec_tools = VectorTools()
-            raw_vector = qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dep_code}')
-            raw_vector = qgis_vec_tools.copy_layer(raw_vector)
-            preprocessed_vector, unwanted_buildings_number, initial_buildings_number = qgis_vec_tools.remove_small_features(raw_vector, MIN_AREA_M2)
-            preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
-            preprocessed_vector = qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
-            preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
-            qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
+            """
+            Execute the cadastre vector preprocessing pipeline.
+            1. Loads the raw vector layer from the specified path
+            2. Creates a copy of the raw vector layer
+            3. Removes small features (buildings) below the minimum area threshold
+            4. Adds a buffer distance to the remaining features
+            5. Assigns unique IDs
+            6. Adds X and Y coordinate columns to the attribute table
+            7. Exports the preprocessed vector layer to a shapefile format
+            8. Writes version information for cadastre and BDORTHO data to files
+            """
+            
+            if(sys_gettrace() is not None):
+                  # en mode debug uniquement -> on active la capture des messages QGIS
+                  self.qgis_vec_tools.catch_qgis_messages_enable()
+            
+            raw_vector = self.qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dep_code}')
+            raw_vector = self.qgis_vec_tools.copy_layer(raw_vector)
+            preprocessed_vector, unwanted_buildings_number, initial_buildings_number = self.qgis_vec_tools.remove_small_features(raw_vector, MIN_AREA_M2)
+            preprocessed_vector = self.qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
+            preprocessed_vector = self.qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
+            preprocessed_vector = self.update_fields(preprocessed_vector)
+            self.qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
 
             with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:
                   f.write(self.version_cadastre)
             with open(f'{self.output_dir_path}/version_BDORTHO', 'w') as f:
                   version_BDORTHO = f'{self.year}, BDOrtho database, IGN (RGB, resolution {self.resolution}cm)'
                   f.write(version_BDORTHO)
-
-            # vérification que les attributs sont les bons, par exemple code dep sur 3 digits
-            attributes = preprocessed_vector.getFeature(500).attributeMap()
-            if attributes['ID'][:3] != self.prefix:
-                  attr = attributes['ID'][:3]
-                  raise NameError(f'Bad prefix for images. Expected {self.prefix} got {attr}.')
-
-            qgis_vec_tools.close()  
-     
-      # @abstractmethod      
-      # def export_vectors(self, preprocessed_vector, output_vector_layer_dir_path, preprocessed_buildings_layer_filename):
-      #       pass
+            
+            self.final_check(preprocessed_vector)
+            
+      
+      @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
+      def update_fields(self, preprocessed_vector):
+            return 
+      
+      @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
+      def final_check(self, preprocessed_vector):
+            pass
                       
