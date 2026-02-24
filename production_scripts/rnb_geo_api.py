@@ -208,4 +208,19 @@ def get_bbox_buildings_geojson(bbox, limit):
 	except requests.exceptions.RequestException as e:
 		print("Request failed:", e)
 
-    
+def extract_rnb_sha1(url, sha1):
+    try:
+        # Extract department number from filename
+        import re
+        match = re.search(r"RNB_([0-9A-Z]+)\.csv\.zip$", url)
+        if match:
+            dept = match.group(1)
+            # For numeric sorting, convert numeric codes to int; leave letters as-is
+            dept_key = int(dept)
+            if dept.isdigit():
+                return (dept_key, url, sha1)
+            else:
+                return  
+    except ValueError:
+        # Skip lines that don't match expected format
+        return

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from production_scripts.rnb_geo_api import extract_rnb_sha1
 import test_setup # ignore unused import
 import unittest # The test framework
 from pathlib import Path
@@ -48,4 +49,33 @@ class Test_Preprocessing(unittest.TestCase):
             new_path = TESTED_RNB_FILE_PATH.parent
             new_path /= "FilteringPointFrom_RNB_09.csv"
             df_filtered.to_csv(new_path, index=False)
+
+      def test_get_SHA1_checksum(self):
+            print()
+            import requests
+
+            # Correct dataset JSON
+            url = "https://www.data.gouv.fr/api/1/datasets/referentiel-national-des-batiments/"
+            data = requests.get(url).json()
+
+            rnb_data_gouv=[]
+            # Iterate over resources
+            for r in data.get("resources", []):
+                  if r.get("checksum"):
+                        # sha1_line = r.get("extras", {}).get("analysis:checksum")
+                        sha1_line = r.get("checksum").get("value")
+                        if sha1_line:
+                              new_data = extract_rnb_sha1(r["url"], sha1_line)
+                              if new_data:
+                                    rnb_data_gouv.append(new_data)
+                             
+            rnb_data_gouv.sort(key=lambda x: x[0])  
             
+            for e in rnb_data_gouv:
+                  print(e) 
+      
+      
+      @unittest.skip("Temporairement désactivé car test long")
+      def test_download_all_departements(self):
+            # TODO
+            pass
