@@ -1,4 +1,6 @@
 from os import environ
+import shutil
+
 display = environ.get("DISPLAY")
 if not display:# No graphical display available
     environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -16,10 +18,15 @@ from processing.core.Processing import Processing #bootstrap manager for QGIS Pr
         
 
 class QgisManager():
-    def __init__(self, prefix="/thebaulm"):   
+    def __init__(self, prefix=None):   
+        
         # MUST be first
         # Without this, QGIS guesses paths. In debug runs the environment is often cleaner, so it “works”.
         # In normal runs → provider registry loads garbage → 💥 segfault.
+        if(prefix == None):
+            prefix = shutil.which("qgis")
+            print(prefix)
+            
         QgsApplication.setPrefixPath(prefix, True)
 
         self.qgs = QgsApplication([], False)
