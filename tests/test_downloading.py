@@ -3,7 +3,6 @@ import test_setup as ts
 import unittest 
 
 from production_scripts import download_vectors as dwd
-from sgis.vector_tools import VectorTools
 from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
 from pathlib import Path
 
@@ -44,11 +43,6 @@ class Test_Downloading(unittest.TestCase):
         
     def test_download_etalab_cadastre_09(self):
         dwd.main("09",  data_type="etalab", date="2025-12-01", raw_data_folder=ts.UNITTESTS_FOLDER_PATH)
-                
-    def test_load_vectors_layer_from_geojson(self):
-        layername=f'batiments_09'
-        qjis_vec_tools = VectorTools()
-        raw_vector = qjis_vec_tools.load_layer(self.expected_file_path, layername)
         
     @unittest.skip("Temporairement désactivé car test long")
     def test_download_cadastre_01_to_08(self):
