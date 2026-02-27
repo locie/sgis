@@ -4,7 +4,8 @@ from os import environ
 from sgis.vector_tools import VectorTools
 from sys import gettrace as sys_gettrace
 
-BASE_DIR="LaCie_thebaulm" # Nom du dossier de stockage des donnees d'entree et de sortie à la racine du home de l'utilisateur
+RAW_FOLDERNAME="LaCie_thebaulm"
+RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
 RESOLUTION=20
 BUFFER_DISTANCE_M=4 # Distance tampon à ajouter autour des bâtiments, en mètres
 MIN_AREA_M2=10 # Seuil de suppression des petits bâtiments, en m²
@@ -23,32 +24,35 @@ class VectorsPreprocess(ABC): # Classe abstraite
       year : str
       preprocessed_buildings_layer_filename : str
       
-      def __init__(self, dep_code, resolution = RESOLUTION):
+      def __init__(self, dept_code, resolution = RESOLUTION, raw_base_folder = None, dest_folder_path = None):
+            
+            if(dest_folder_path == None):
+                  dest_folder_path = environ['HOME']
             
             # crée une instance de VectorTools
             self.qgis_vec_tools = VectorTools()
             
             # paramètres d'entrée communs à Etalab et RNB
-            self.dep_code = dep_code
-            self.home_path = environ['HOME']
+            self.dept_code = dept_code
+            
             self.resolution = resolution
-            if len(dep_code)==2:
-                  self.prefix = f'0{dep_code}'
+            if len(dept_code)==2:
+                  self.prefix = f'0{dept_code}'
             else:
-                  self.prefix = dep_code
+                  self.prefix = dept_code
             
             # chemins de destination des données prétraitées
-            self.output_dir_path = rf'{self.home_path}/split/{self.dep_code}/{self.year}'
+            self.output_dir_path = rf'{dest_folder_path}/split/{self.dept_code}/{self.year}'
             self.output_rasters_dir_path = rf'{self.output_dir_path}/rasters'
             self.output_vector_layer_dir_path =  rf'{self.output_dir_path}/preprocessing/vectors'  
             self.create_output_dirs()
             
             # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
-            self.raster_layers_dir_path = rf'{self.home_path}/temporary_LaCie/rasters/only_tiles/{self.dep_code}/{self.year}/{self.dep_code}-{self.year}-0M{self.resolution}-RGB'
+            self.raster_layers_dir_path = rf'{dest_folder_path}/temporary_LaCie/rasters/only_tiles/{self.dept_code}/{self.year}/{self.dept_code}-{self.year}-0M{self.resolution}-RGB'
             
             
       def check_params(self): #  checks input parameters before preprocessing
-        assert ((len(self.dep_code)==2) or (len(self.dep_code)==3 and self.dep[0]=='9'))
+        assert ((len(self.dept_code)==2) or (len(self.dept_code)==3 and self.dep[0]=='9'))
         assert self.resolution in range(1, 100)
         if not Path(self.vectors_layer_raw_path).exists():
             raise FileNotFoundError(f'Cadastre data not found in {self.vector_layer_raw_path.parent()}')
@@ -77,7 +81,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   # en mode debug uniquement -> on active la capture des messages QGIS
                   self.qgis_vec_tools.catch_qgis_messages_enable()
             
-            raw_vector = self.qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dep_code}')
+            raw_vector = self.qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dept_code}')
             raw_vector = self.qgis_vec_tools.copy_layer(raw_vector)
             preprocessed_vector, unwanted_buildings_number, initial_buildings_number = self.qgis_vec_tools.remove_small_features(raw_vector, MIN_AREA_M2)
             preprocessed_vector = self.qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)

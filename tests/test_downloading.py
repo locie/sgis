@@ -1,58 +1,65 @@
 #!/usr/bin/env python3
-import test_setup as ts # ignore unused import
-import unittest # The test framework
-from os import path
-from production_scripts import download_vectors as rnb # The code to test
-from sgis.vector_tools import VectorTools
+import test_setup as ts
+import unittest 
 
-TEST_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files/"
+from production_scripts import download_vectors as dwd
+from sgis.vector_tools import VectorTools
+from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
+from pathlib import Path
+
+
 
 class Test_Downloading(unittest.TestCase):
-    def test_download_zip(self):
-        filename="RNB_09.csv.zip"
-        url=TEST_RNB_URL+filename
-        target= ts.TEST_TARGET_FOLDER+filename
-        sha1_of_zip_file =rnb.download_file(url, target)
-        print(f"sha1: {sha1_of_zip_file}")
+    
+    @classmethod
+    def setUpClass(self):
+        """
+        Configure la classe de test en initialisant les répertoires de test.
+        Cette méthode prépare l'environnement de test en :
+        1. Création du dossier principal des résultats de test s'il n'existe pas
+        2. Suppression de tout dossier de vecteurs de cadastre existant d'une session de test précédente
+        La méthode garantit une table rase pour chaque test en effaçant l'ancien cadastre.
+        résultats vectoriels tout en préservant la structure du répertoire principal des résultats de test.
+        
+        3. Télécharge le fichier de test vers /tmp/sgis/unittests/RNB_09.csv.zip
+        """
+        ts.create_tests_results_folder()
+        ts.clean_up_test_cadastres_folders()
+        self.expected_file_path = ts.UNITTESTS_FOLDER_PATH + "RNB_09.csv"
+        self.downloaded_rnb_09_csv_sha1 = dwd.download_file(ts.TEST_RNB_09_URL, ts.TEST_RNB_09_ZIP_TARGET_PATH)
+    
+    def test_check_downloaded_zip_sha1(self):
+        all_dept_metadata = request_all_rnb_csv_metadata()
+        dep_code=9 #ariege
+        ariege_metadata = find_dept_metadata(all_dept_metadata, dep_code)
+        expected_sha1 = ariege_metadata.sha1
+        self.assertEqual(self.downloaded_rnb_09_csv_sha1, expected_sha1)
     
     def test_unzip(self):
-        filename="RNB_09.csv.zip"
-        zip_path=ts.TEST_TARGET_FOLDER+filename
-        target=ts.TEST_TARGET_FOLDER
-        self.assertTrue(path.exists(zip_path), f"{zip_path} not found. Execute once the following test: test_dowloading_RNB_09_csv") 
-        rnb.unzip(zip_path, ts.TEST_TARGET_FOLDER)
-        unzipped_filename="RNB_09.csv"
-        self.assertTrue(path.exists(target+unzipped_filename))    
+        dwd.unzip(ts.TEST_RNB_09_ZIP_TARGET_PATH, ts.UNITTESTS_FOLDER_PATH)
+        self.assertTrue(Path(self.expected_file_path).exists())    
         
     def test_download_rnb_cadastre_09(self):
-        rnb.main("rnb","09")
+        dwd.main("09", raw_data_folder = ts.UNITTESTS_FOLDER_PATH)
         
     def test_download_etalab_cadastre_09(self):
-        rnb.main("etalab","09","2025-12-01")
-    
-    @unittest.skip("Temporairement désactivé car test long")
-    def test_download_cadastre_01_to_08(self):
-        rnb.main("rnb","01","2025-12-01")
-        rnb.main("rnb","02","2025-12-01")
-        rnb.main("rnb","03","2025-12-01")
-        rnb.main("rnb","04","2025-12-01")
-        rnb.main("rnb","05","2025-12-01")
-        rnb.main("rnb","06","2025-12-01")
-        rnb.main("rnb","07","2025-12-01")
-        rnb.main("rnb","08","2025-12-01")
-        
-    def test_read_metadata(self):
-        filename="RNB_09.csv.zip"
-        url=TEST_RNB_URL+filename
-        rnb.get_csv_metadata(url)   
-        
+        dwd.main("09",  data_type="etalab", date="2025-12-01", raw_data_folder=ts.UNITTESTS_FOLDER_PATH)
+                
     def test_load_vectors_layer_from_geojson(self):
-        filename="RNB_09.csv"
-        geojson_csv_file_path=ts.TEST_TARGET_FOLDER+filename
-        self.assertTrue(path.exists(geojson_csv_file_path), f"{geojson_csv_file_path} not found. Execute once the following tests: \ntest_dowloading_RNB_09_csv \n test_unzip") 
         layername=f'batiments_09'
         qjis_vec_tools = VectorTools()
-        raw_vector = qjis_vec_tools.load_layer(geojson_csv_file_path, layername)
+        raw_vector = qjis_vec_tools.load_layer(self.expected_file_path, layername)
+        
+    @unittest.skip("Temporairement désactivé car test long")
+    def test_download_cadastre_01_to_08(self):
+        dwd.main("rnb","01","2025-12-01")
+        dwd.main("rnb","02","2025-12-01")
+        dwd.main("rnb","03","2025-12-01")
+        dwd.main("rnb","04","2025-12-01")
+        dwd.main("rnb","05","2025-12-01")
+        dwd.main("rnb","06","2025-12-01")
+        dwd.main("rnb","07","2025-12-01")
+        dwd.main("rnb","08","2025-12-01")
             
 if __name__ == '__main__':
     unittest.main()

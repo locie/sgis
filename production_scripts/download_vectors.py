@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 import argparse
-from datetime import datetime
 import sys
-from typing import Dict
 import requests
 import zipfile
 from pathlib import Path
 import hashlib
-import json
-from os import system
 import pandas as pd
+from production_scripts.cadastre_data import RNB, Etalab
+from production_scripts.rnb_geo_api import normalize_dept_code_number
 
-CADASTRE_FOLDER_PATH="LaCie_thebaulm/gis/vectors/cadastre"
-BASE_ETALAB_URL="https://cadastre.data.gouv.fr/data/etalab-cadastre" # etalab
-BASE_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files" # R.N.B. : Référentiel National des Bâtiments
+RAW_DATA_BASE_FOLDER="LaCie_thebaulm"
+RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
 CHUNCK_SIZE=8192
 
 '''
@@ -35,73 +32,61 @@ def die(msg):
     sys.exit(1)
 
 
-def main(data_type : str, dep_code : str, date = "yyyy-mm-dd"):
-    
-    # construction des repertoires de destination
-    # nom du fichier de vecteurs raw layer
-    if(data_type == "etalab"):
-        raw_dirname = f"cadastre-{dep_code}-batiments-shp"
-        etalab_param = build_etalab_param(dep_code, date)
-        url = etalab_param["zip_url"]
-        zip_filename = rf"{raw_dirname}.zip"
-        output_filename = etalab_param["output_filename"]
-        
-    elif(data_type == "rnb"):
-        raw_dirname = f"cadastre-{dep_code}-batiments-csv"
-        rnb_param = build_rnb_param(dep_code)
-        url = rnb_param["zip_url"]
-        date = get_rnb_date(url)
-        output_filename = rnb_param["output_filename"]
-        zip_filename = rf"{output_filename}.zip"
-         
-    else:
-        raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
-    # end if
+def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_data_folder = RAW_DATA_BASE_FOLDER):
     
     home = Path.home()
-    base_dir = home / CADASTRE_FOLDER_PATH
-
-    # Check that LaCie is connected
+    
+    # Check that RAW data storage is connected
+    base_dir = home / raw_data_folder
     if not base_dir.exists():
         die(f"{base_dir} not found")
-
-    rootp = base_dir / date
-    zipped_dir = rootp / "zipped"
-    unzipped_dir = rootp / "unzipped" / raw_dirname
-
-    zipped_dir.mkdir(parents=True, exist_ok=True)
-    unzipped_dir.mkdir(parents=True, exist_ok=True)
     
-    zip_file_path = zipped_dir / zip_filename
-    unzipped_file_path = unzipped_dir / output_filename
     
-      # Check if data already exists
+    cadastre_dir = base_dir / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH
+    if data_type == "etalab":
+        data = Etalab.from_dep(dept_code, date)
+
+    elif data_type == "rnb":
+        data = RNB.from_dep(dept_code)
+
+    else:
+        raise ValueError(f"Invalid data type: {data_type}. Expected 'etalab' or 'rnb'.")
+
+    zip_file_path, unzipped_file_path = data.build_paths(cadastre_dir)
+
     if unzipped_file_path.exists():
-        die(
-            f"Data exists in {unzipped_dir}\n"
-            "Use it or remove the directory"
-    )
+        die(f"Data exists in {unzipped_file_path.parent}\nUse it or remove the directory")
     
-    sha1_of_zip_file = download_file(url, zip_file_path)
+    # download raw file
+    f_hash = download_file(data.url, zip_file_path)
     
-    print(f"Downloading is finished of {url} - sha1: {sha1_of_zip_file}")
-    unzip(zip_file_path, unzipped_dir)
+    # verify sha1 before unzip (only for RNB because sha1 is unavailable for etalab)
+    if(data_type == "rnb"):
+        if f_hash != data.expected_hash:
+            raise ValueError(f"Downloading is finished of {data.url} but actual sha1: {f_hash} mismatchs the expected sha1: {data.expected_hash} ")
+        
     
-    # TODO ajouter si possible des verifications sur l'integrite des donnees ici
+    # unzip raw data 
+    unzip(zip_file_path, unzipped_file_path.parent)
     
     if(data_type == "rnb"):
         # NOTE ⚠ IMPORTANT : Nettoie la colonne "shape" avant traitement
         # Suppression de 'SRID=4326;' dans la colonne "shape" WKT Multipolygone
-        fix_shape_column_for_qgis(unzipped_file_path)
-        
-    system(f"tree {rootp}")
+        _fix_shape_column_for_qgis(unzipped_file_path)
+        not_polygon = _count_non_polygon_geom(unzipped_file_path)
+        print(f"{unzipped_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.")
+    else:
+        print(f"{unzipped_file_path}")
+    
+    return data
+    
 
-def download_file(url, output_path, chunk_size=CHUNCK_SIZE):
+def download_file(url, output_path, chunk_size=CHUNCK_SIZE, expected_sha1=None):
     """
     Télécharge fichier depuis une url vers un dossier cible et retourne sha1 pour verifier l'integrite du fichier téléchargé
     """
     
-    sha1_of_file = hashlib.sha1()
+    hash = hashlib.sha1()
     
     print(f"Downloading {url}")
     response = requests.get(url, stream=True)
@@ -112,8 +97,9 @@ def download_file(url, output_path, chunk_size=CHUNCK_SIZE):
         for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk:
                 f.write(chunk)
-                sha1_of_file.update(chunk)
-    return sha1_of_file.hexdigest()
+                hash.update(chunk)
+    return hash.hexdigest()
+
 
 def unzip(zip_path, target_dir):
     """
@@ -129,72 +115,34 @@ def unzip(zip_path, target_dir):
             f"in:\n\t{target_dir}"
         )
         
-def get_csv_metadata(url : str) -> Dict:
-    try:
-        r = requests.head(url)
-        r.raise_for_status()
-        metadata = {
-            "content_length": r.headers.get("Content-Length"), 
-            "last_modified": r.headers.get("Last-Modified"),
-            "etag": r.headers.get("ETag"),
-            "content_type": r.headers.get("Content-Type")
-        }
-        # print(json.dumps(metadata, indent=2))
-        return metadata
-    
-    # gestion des erreurs
-    except requests.exceptions.HTTPError as e:
-        die(
-            "HTTP error occurred"
-            f"Status: {e.response.status_code}"
-            f"Message: {e.response.text}"
-        )
-    except requests.exceptions.RequestException as e:
-        die(f"Request failed {e}")
-
-def build_rnb_param(dep_code) -> Dict:
-    fname=rf"RNB_{dep_code}.csv"
-    rnb_param = {
-        "output_filename": fname,
-        "zip_url": rf"{BASE_RNB_URL}/{fname}.zip"
-    }
-    return rnb_param  
-
-def build_etalab_param(dep_code : str, date : str) -> Dict:
-    etalab_param = {
-        "output_filename": "batiments.shp",
-        "zip_url": rf"{BASE_ETALAB_URL}/{date}/shp/departements/{dep_code}/cadastre-{dep_code}-batiments-shp.zip"
-    }
-    return etalab_param
-
 # ============================================================
 # ⚠ IMPORTANT : Nettoyer le champ WKT avant traitement
 # ============================================================
-def fix_shape_column_for_qgis(csv_path : str):
+def _fix_shape_column_for_qgis(csv_path : Path):
     '''
     Cette fonction modifie le fichier CSV d’entrée directement en supprimant les déclarations SRID=4326
     des chaînes de géométrie WKT (Well-Known Text). Les préfixes SRID peuvent provoquer des problèmes
     lors de l’importation des géométries dans QGIS ; cette étape de prétraitement garantit donc la compatibilité.
     '''
-    # Load CSV
     df = pd.read_csv(csv_path, sep=';')
-
-    # Remove 'SRID=4326;' from the WKT column
-    # Replace "shape" with your actual WKT column name
     df['shape'] = df['shape'].str.replace(r'^SRID=4326;', '', regex=True)
-
-    # Save cleaned CSV (optional)
     df.to_csv(csv_path, index=False)
 
 
-def get_rnb_date(url: str):
-    '''
-    recupere la date de derniere modification du fichier de données RNB téléchargé
-    '''
-    metadata = get_csv_metadata(url)
-    dt = datetime.strptime(metadata.get("last_modified"), "%a, %d %b %Y %H:%M:%S GMT")
-    return dt.strftime("%Y-%m-%d")
+def _count_non_polygon_geom(csv_path : str) -> int:
+    df = pd.read_csv(csv_path, sep=',')
+    # Count geometries that not mismatchs POLYGON or MULTIPOLYGON
+    pattern = r"^(?:POLYGON|MULTIPOLYGON)"
+    notpolygon_counts = (~df["shape"].str.contains(pattern, na=False)).sum()
+    # print("Nombre de lignes ne contenant PAS POLYGON ou MULTIPOLYGON :", notpolygon_counts)
+    return notpolygon_counts
 
+
+def download_all_available_rnb_csv(list_to_dwld : list):
+    for e in list_to_dwld:
+        main(data_type, dept_code)
+    # system(f"tree {rootp}")
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -204,22 +152,19 @@ if __name__ == "__main__":
     parser.add_argument("--dep", type=str, required=True, help="Department number (XX or DOM-TOM)")
     args = parser.parse_args()
     data_type = args.data_type
-    # Normalize department number
-    dep_code = args.dep.strip()
-    if len(dep_code) == 1:
-        dep_code = f"0{dep_code}"
-    elif len(dep_code) == 3 and dep_code.startswith("0"):
-        dep_code = dep_code[1:]
+    
+    dept_code = normalize_dept_code_number(args.dep)
      
     # Téléchargement depuis Etalab ou RNB ?
     if(data_type == "etalab"):
         parser.add_argument("--date", type=str, required=True, help='Date format must be: YYYY-MM-JJ.\nAvailable month ("MM") must be checked on: https://cadastre.data.gouv.fr/datasets/cadastre-etalab')
         args = parser.parse_args()
         date = args.date
+        main(dept_code, data_type, date) 
     elif(args.data_type == "rnb"):
-        pass
+        main(dept_code) 
     else:
         raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
     # end if
     
-    main(data_type, dep_code, date) 
+    

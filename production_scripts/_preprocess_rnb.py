@@ -1,5 +1,5 @@
 # #!/usr/bin/env python3
-from production_scripts._preprocess_cadastre_vectors import VectorsPreprocess
+from production_scripts._preprocess_cadastre_vectors import * 
 from datetime import datetime
 from pathlib import Path
 
@@ -7,9 +7,15 @@ class PreprocessRNB(VectorsPreprocess):
     """
     Classe de prétraitement des données de cadastre RNB.
     """
-    def __init__(self, dep, year, cadastre_dir, resolution=20):
+    def __init__(self, dep, year, cadastre_dir, resolution = RESOLUTION, raw_base_folder = None, dest_folder_path = None):
+        
+        if(raw_base_folder == None):
+            raw_base_folder = Path(environ['HOME']) / RAW_FOLDERNAME
+        else:
+            raw_base_folder = Path(raw_base_folder)
+        
         self.year = year
-        super().__init__(dep) # Appel du constructeur parent
+        super().__init__(dep, dest_folder_path = dest_folder_path) # Appel du constructeur parent
         self.cadastre_dir = cadastre_dir
         self.resolution = resolution
         try:
@@ -20,7 +26,9 @@ class PreprocessRNB(VectorsPreprocess):
 
         self.version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre RNB')
         # IO files
-        self.vectors_layer_raw_path = Path(rf'{self.home_path}/LaCie_thebaulm/gis/vectors/cadastre/{self.cadastre_dir}/unzipped/cadastre-{self.dep_code}-batiments-csv/RNB_{self.dep_code}.csv')
+
+        unzipped_folder_path = raw_base_folder/ RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
+        self.vectors_layer_raw_path = unzipped_folder_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}.csv"
         self.preprocessed_buildings_layer_filename = 'batiments.shp' # TODO voir s'il n'est pas préférable de faire l'export CSV au lieu de ShapeFile
         
         # vérification des paramètres

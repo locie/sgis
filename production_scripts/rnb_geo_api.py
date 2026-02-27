@@ -3,12 +3,20 @@ from datetime import datetime, timezone
 from typing import Optional, Dict
 import pandas as pd
 from io import StringIO
-import json
+from typing import NamedTuple
 
+DATA_GOUV_RNB_SITE_URL="https://www.data.gouv.fr/api/1/datasets/referentiel-national-des-batiments/"
 GEO_API_URL = "https://geo.api.gouv.fr/departements"
 RNB_DIFF_URL = "https://rnb-api.beta.gouv.fr/api/alpha/buildings/diff/"
 MIN_ALLOWED_DATE = datetime(2024, 4, 1, tzinfo=timezone.utc)
 LIMIT = 100
+
+class MetadataTuple(NamedTuple):
+    dept_code: int
+    date: str # Date format must be: YYYY-MM-JJ
+    url: str
+    sha1: str
+
 
 def get_rnb_modifications(
     since: str,
@@ -207,20 +215,57 @@ def get_bbox_buildings_geojson(bbox, limit):
 
 	except requests.exceptions.RequestException as e:
 		print("Request failed:", e)
+  
+def request_all_rnb_csv_metadata() -> list[MetadataTuple] :
 
-def extract_rnb_sha1(url, sha1):
+    # Correct dataset JSON
+    data = requests.get(DATA_GOUV_RNB_SITE_URL).json()
+
+    rnb_data_gouv=[]
+    # Iterate over resources
+    for r in data.get("resources", []):
+            if r.get("checksum"):   
+                url = r.get("url")            
+                sha1= r.get("checksum").get("value")
+                created_at = r.get("created_at")
+                dt = datetime.fromisoformat(created_at)
+                formated_date = dt.strftime("%Y-%m-%d")
+                dep_int = get_dept_code_from_url(url)
+                
+                if dep_int:
+                    new_metadata = MetadataTuple(
+                        dept_code=dep_int,
+                        date=formated_date,
+                        url=url,
+                        sha1=sha1
+                    )
+                    rnb_data_gouv.append(new_metadata)
+                        
+    rnb_data_gouv.sort(key=lambda x: x[0])  
+    return rnb_data_gouv
+
+def get_dept_code_from_url(url) -> int | None:
     try:
         # Extract department number from filename
         import re
         match = re.search(r"RNB_([0-9A-Z]+)\.csv\.zip$", url)
         if match:
-            dept = match.group(1)
-            # For numeric sorting, convert numeric codes to int; leave letters as-is
-            dept_key = int(dept)
-            if dept.isdigit():
-                return (dept_key, url, sha1)
+            dept_str = match.group(1)
+            if dept_str.isdigit():
+                return int(dept_str)
             else:
-                return  
+                return None
     except ValueError:
-        # Skip lines that don't match expected format
-        return
+        return None
+    
+def find_dept_metadata(items: list[MetadataTuple], a_dept_code: int) -> MetadataTuple | None:  
+    return next((p for p in items if p.dept_code == a_dept_code), None)
+
+def normalize_dept_code_number(a_dept_code : str) -> str:
+    # Normalize department number
+    dept_code = a_dept_code.strip()
+    if len(dept_code) == 1:
+        dept_code = f"0{dept_code}"
+    elif len(dept_code) == 3 and dept_code.startswith("0"):
+        dept_code = dept_code[1:]
+    return dept_code

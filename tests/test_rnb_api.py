@@ -32,7 +32,6 @@ class Test_rnb_api(unittest.TestCase):
   #       print(f"Nombre de modifications pour le departement {dep} : {len(df)}")
   #       f.write(f"Nombre de modifications pour le departement {dep} : {len(df)}\n")
   
-  @unittest.skip("Temporairement désactivé car test long")
   def test_track_changes_for_1_departement(self):
     dept_code="02"
     since="2025-10-04T13:28:38Z"

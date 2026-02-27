@@ -1,81 +1,66 @@
 #!/usr/bin/env python3
-from production_scripts.rnb_geo_api import extract_rnb_sha1
-import test_setup # ignore unused import
-import unittest # The test framework
-from pathlib import Path
-from production_scripts import preprocess
+import test_setup as ts
+import unittest 
 
+from production_scripts import preprocess
+from production_scripts import download_vectors as dwd 
+from pathlib import Path
+from datetime import datetime
 
 class Test_Preprocessing(unittest.TestCase):
-      # Before executing this test: rm -r /home/pitardg/split/09
+      
+      @classmethod
+      def setUpClass(self):
+            """
+            Configure la classe de test en initialisant les répertoires de test.
+            Cette méthode prépare l'environnement de test en :
+            1. Création du dossier principal des résultats de test s'il n'existe pas
+            2. Suppression de tout dossier de vecteurs de cadastre existant d'une session de test précédente
+            La méthode garantit une table rase pour chaque test en effaçant l'ancien cadastre.
+            résultats vectoriels tout en préservant la structure du répertoire principal des résultats de test.
+            """
+            ts.create_tests_results_folder()
+            ts.clean_up_test_cadastres_folders()
+          
       def test_preprocess_etalab_cadastre_09(self):
             # input params
-            dep='09';
-            year='2025';
-            cadastre_dir='2025-12-01'
-            resolution=20;
-            print('')
-            preprocess.main('etalab',dep, year, cadastre_dir, resolution)
+            t_dep='09';
+            t_year='2025';
+            t_date='2025-12-01'
+            t_cadastre_dir = t_date
+            # download
+            dwd.main(t_dep,  data_type="etalab", date=t_date, raw_data_folder = ts.UNITTESTS_FOLDER_PATH)
+            # preprocess Etalab
+            preprocess.main('etalab',dep = t_dep, year = t_year, cadastre_dir = t_cadastre_dir, raw_data_folder = ts.UNITTESTS_FOLDER_PATH,  dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
       
       def test_preprocess_rnb_cadastre_09(self):
-            # input params
-            dep='09';
-            year='2026';
-            cadastre_dir='2026-02-14'
-            resolution=20;
-            print('')
-            preprocess.main('rnb',dep, year, cadastre_dir, resolution)
-            
-      def test_geometries_in_RNB_09_csv(self):
-            """
-            Explique warning au chargement du fichier RNB_09.csv : [QGIS] - [Warning] - DelimitedText: 1861 record(s) discarded due to incompatible geometry types
-            """
-            import pandas as pd
-            # Load CSV
-            TESTED_RNB_FILE_PATH=Path("/home/pitardg/LaCie_thebaulm/gis/vectors/cadastre/2026-02-14/unzipped/cadastre-09-batiments-csv/RNB_09.csv")
-            df = pd.read_csv(TESTED_RNB_FILE_PATH, sep=",")
-
-            # Replace 'geometry_column' with the name of your WKT column
-            geometry_column_name = "shape"
-            pattern = r"^(?:POLYGON|MULTIPOLYGON)"
-            countnotpolygon = (~df[geometry_column_name].str.contains(pattern, na=False)).sum()
-            countpoint = (df[geometry_column_name].str.contains("POINT", na=False)).sum()
-            print()
-            print("Nombre de lignes ne contenant PAS POLYGON ou MULTIPOLYGON :", countnotpolygon)
-            print("Nombre de lignes contenant POINT :", countpoint)
-            
-            # save csv file containing only POINT geometries to compare with Cadastre Etalab
-            df_filtered = df[df[geometry_column_name].str.contains("POINT", na=False)]
-            new_path = TESTED_RNB_FILE_PATH.parent
-            new_path /= "FilteringPointFrom_RNB_09.csv"
-            df_filtered.to_csv(new_path, index=False)
-
-      def test_get_SHA1_checksum(self):
-            print()
-            import requests
-
-            # Correct dataset JSON
-            url = "https://www.data.gouv.fr/api/1/datasets/referentiel-national-des-batiments/"
-            data = requests.get(url).json()
-
-            rnb_data_gouv=[]
-            # Iterate over resources
-            for r in data.get("resources", []):
-                  if r.get("checksum"):
-                        # sha1_line = r.get("extras", {}).get("analysis:checksum")
-                        sha1_line = r.get("checksum").get("value")
-                        if sha1_line:
-                              new_data = extract_rnb_sha1(r["url"], sha1_line)
-                              if new_data:
-                                    rnb_data_gouv.append(new_data)
-                             
-            rnb_data_gouv.sort(key=lambda x: x[0])  
-            
-            for e in rnb_data_gouv:
-                  print(e) 
+            metadata = dwd.main("09", raw_data_folder=ts.UNITTESTS_FOLDER_PATH)
+            t_date = datetime.strptime(metadata.date, '%Y-%m-%d')
+            t_year = datetime.strftime(t_date, "%Y")
+            t_cadastre_dir = metadata.date
+            preprocess.main('rnb', metadata.dept_code, year = t_year, cadastre_dir = t_cadastre_dir, raw_data_folder = ts.UNITTESTS_FOLDER_PATH,  dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
       
       
-      @unittest.skip("Temporairement désactivé car test long")
-      def test_download_all_departements(self):
-            # TODO
-            pass
+      # @unittest.skip("Temporairement désactivé")      
+      # def test_geometries_in_RNB_09_csv(self):
+      #       """
+      #       Explique warning au chargement du fichier RNB_09.csv : [QGIS] - [Warning] - DelimitedText: 1861 record(s) discarded due to incompatible geometry types
+      #       """
+      #       import pandas as pd
+      #       # Load CSV
+      #       TESTED_RNB_FILE_PATH=Path("/home/pitardg/LaCie_thebaulm/gis/vectors/cadastre/2024-06-06/unzipped/cadastre-09-batiments-csv/RNB_09.csv")
+      #       df = pd.read_csv(TESTED_RNB_FILE_PATH, sep=";")
+
+      #       geometry_column_name = "shape"
+      #       pattern = r"^(?:POLYGON|MULTIPOLYGON)"
+      #       countnotpolygon = (~df[geometry_column_name].str.contains(pattern, na=False)).sum()
+      #       countpoint = (df[geometry_column_name].str.contains("POINT", na=False)).sum()
+      #       print()
+      #       print("Nombre de lignes ne contenant PAS POLYGON ou MULTIPOLYGON :", countnotpolygon)
+      #       print("Nombre de lignes contenant POINT :", countpoint)
+            
+      #       # save csv file containing only POINT geometries to compare with Cadastre Etalab
+      #       df_filtered = df[df[geometry_column_name].str.contains("POINT", na=False)]
+      #       new_path = TESTED_RNB_FILE_PATH.parent
+      #       new_path /= "FilteringPointFrom_RNB_09.csv"
+      #       df_filtered.to_csv(new_path, index=False)

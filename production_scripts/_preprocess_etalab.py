@@ -1,16 +1,21 @@
 # #!/usr/bin/env python3
-from production_scripts._preprocess_cadastre_vectors import VectorsPreprocess
+from production_scripts._preprocess_cadastre_vectors import *
 from datetime import datetime
 from pathlib import Path
-from sgis.vector_tools import VectorTools
 
 class PreprocessEtalab(VectorsPreprocess):
     """
     Classe de prétraitement des données de cadastre d'Etalab.
     """
-    def __init__(self, dep, year, cadastre_dir, resolution=20):
+    def __init__(self, dep, year, cadastre_dir, resolution = RESOLUTION, raw_base_folder = None, dest_folder_path = None):
+        
+        if(raw_base_folder == None):
+            raw_base_folder = Path(environ['HOME']) / RAW_FOLDERNAME
+        else:
+            raw_base_folder = Path(raw_base_folder)
+                  
         self.year = year
-        super().__init__(dep) # Appel du constructeur parent
+        super().__init__(dep, dest_folder_path = dest_folder_path) # Appel du constructeur parent
         self.cadastre_dir = cadastre_dir
         self.resolution = resolution
         try:
@@ -20,7 +25,8 @@ class PreprocessEtalab(VectorsPreprocess):
             raise e
         
         # IO files
-        self.vectors_layer_raw_path = Path(rf'{self.home_path}/LaCie_thebaulm/gis/vectors/cadastre/{self.cadastre_dir}/unzipped/cadastre-{self.dep_code}-batiments-shp/batiments.shp')
+        unzipped_path = raw_base_folder / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
+        self.vectors_layer_raw_path = unzipped_path / f"cadastre-{self.dept_code}-batiments-shp/batiments.shp"
         self.preprocessed_buildings_layer_filename = 'batiments.shp'
         self.version_cadastre = datetime.strftime(self.date, '%B, %Y, Cadastre Etalab')
         # vérification des paramètres
