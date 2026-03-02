@@ -3,6 +3,7 @@ from pathlib import Path
 from os import environ
 from sgis.vector_tools import VectorTools
 from sys import gettrace as sys_gettrace
+from datetime import datetime
 
 RAW_FOLDERNAME="LaCie_thebaulm"
 RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
@@ -24,38 +25,61 @@ class VectorsPreprocess(ABC): # Classe abstraite
       year : str
       preprocessed_buildings_layer_filename : str
       
-      def __init__(self, dept_code, resolution = RESOLUTION, raw_base_folder = None, dest_folder_path = None):
-            
-            if(dest_folder_path == None):
-                  dest_folder_path = environ['HOME']
+      def __init__(self, dept_code, cadastre_dir, resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
+             # vérifie formatage cadastre_dir YYYY-MM-DD
+            try:
+                  date = datetime.strptime(cadastre_dir, '%Y-%m-%d')
+            except ValueError as e:
+                  print("\n\n Invalid date format. Expected YYYY-MM-DD:")
+                  raise e 
             
             # paramètres d'entrée communs à Etalab et RNB
+            self.year = str(date.year)
             self.dept_code = dept_code
+            self.cadastre_dir = cadastre_dir
+            self.resolution = resolution 
             
-            self.resolution = resolution
+            #  construit les chemins d'entree/sortie
+            if(raw_folder_path == None):
+                  home_path = Path(environ['HOME'])
+                  raw_folder_path = home_path / RAW_FOLDERNAME
+                  dest_folder_path = home_path
+            else:
+                  raw_folder_path = Path(raw_folder_path)
+                  dest_folder_path =  Path(dest_folder_path)
+            
+            self.version_cadastre = self.build_version_cadastre(date)
+            
             if len(dept_code)==2:
                   self.prefix = f'0{dept_code}'
             else:
                   self.prefix = dept_code
+
+            #  chemin des données sources (unzipped)
+            unzipped_path = raw_folder_path / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
+            self.vectors_layer_raw_path = self.build_resulting_vectors_file_path(unzipped_path)
             
             # chemins de destination des données prétraitées
-            self.output_dir_path = rf'{dest_folder_path}/split/{self.dept_code}/{self.year}'
-            self.output_rasters_dir_path = rf'{self.output_dir_path}/rasters'
-            self.output_vector_layer_dir_path =  rf'{self.output_dir_path}/preprocessing/vectors'  
+            self.output_dir_path = dest_folder_path / "split" / self.dept_code/ self.year
+            self.output_rasters_dir_path = self.output_dir_path / "rasters"
+            self.output_vector_layer_dir_path =  self.output_rasters_dir_path / "preprocessing" / "vectors"  
             self.create_output_dirs()
+            self.check_params()
             
+            self.preprocessed_buildings_layer_filename = 'batiments.shp'
             # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
-            self.raster_layers_dir_path = rf'{dest_folder_path}/temporary_LaCie/rasters/only_tiles/{self.dept_code}/{self.year}/{self.dept_code}-{self.year}-0M{self.resolution}-RGB'
+            self.raster_layers_dir_path = dest_folder_path / "temporary_LaCie" / "rasters" / "only_tiles"  / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
             
             
       def check_params(self): #  checks input parameters before preprocessing
         assert ((len(self.dept_code)==2) or (len(self.dept_code)==3 and self.dep[0]=='9'))
         assert self.resolution in range(1, 100)
-        if not Path(self.vectors_layer_raw_path).exists():
-            raise FileNotFoundError(f'Cadastre data not found in {self.vector_layer_raw_path.parent()}')
+        if not self.vectors_layer_raw_path.parent.exists():
+            raise FileNotFoundError(f'Cadastre data not found in {self.vectors_layer_raw_path.parent}')
       
       def create_output_dirs(self):
             try:
+                  # PosixPath('/tmp/sgis/unittests/LaCie_thebaulm/gis/vectors/cadastre/2025-12-01/unzipped/cadastre-09-batiments-shp')
                   Path(self.output_rasters_dir_path).mkdir(parents=True)
                   Path(self.output_vector_layer_dir_path).mkdir(parents=True)
             except FileExistsError as e:
@@ -96,6 +120,13 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   
                   self.final_check(preprocessed_vector)
             
+      @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
+      def build_resulting_vectors_file_path(self, unzipped_path : Path) -> Path :
+            return 
+      
+      @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
+      def build_version_cadastre(self, date : datetime):
+            return 
       
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
       def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):

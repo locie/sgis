@@ -32,17 +32,18 @@ def die(msg):
     sys.exit(1)
 
 
-def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_data_folder = RAW_DATA_BASE_FOLDER):
+def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path = None):
     
-    home = Path.home()
+    #  construit les chemins d'entree/sortie
+    if(raw_folder_path == None):
+        home_path = Path.home()
+        raw_folder_path = home_path / RAW_DATA_BASE_FOLDER
+        if not raw_folder_path.exists():
+            die(f"{raw_folder_path} not found")
+    else:
+        raw_folder_path = Path(raw_folder_path)
     
-    # Check that RAW data storage is connected
-    base_dir = home / raw_data_folder
-    if not base_dir.exists():
-        die(f"{base_dir} not found")
-    
-    
-    cadastre_dir = base_dir / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH
+    cadastre_dir = raw_folder_path / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH
     if data_type == "etalab":
         data = Etalab.from_dep(dept_code, date)
 

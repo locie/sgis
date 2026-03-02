@@ -1,38 +1,16 @@
 # #!/usr/bin/env python3
 from production_scripts._preprocess_cadastre_vectors import * 
-from datetime import datetime
 from pathlib import Path
 
 class PreprocessRNB(VectorsPreprocess):
     """
     Classe de prétraitement des données de cadastre RNB.
     """
-    def __init__(self, dep, year, cadastre_dir, resolution = RESOLUTION, raw_base_folder = None, dest_folder_path = None):
-        
-        if(raw_base_folder == None):
-            raw_base_folder = Path(environ['HOME']) / RAW_FOLDERNAME
-        else:
-            raw_base_folder = Path(raw_base_folder)
-        
-        self.year = year
-        super().__init__(dep, dest_folder_path = dest_folder_path) # Appel du constructeur parent
-        self.cadastre_dir = cadastre_dir
-        self.resolution = resolution
-        try:
-            date = datetime.strptime(self.cadastre_dir, '%Y-%m-%d')
-        except ValueError as e:
-            print("\n\n Invalid date format. Expected YYYY-MM-DD:")
-            raise e
-
-        self.version_cadastre = datetime.strftime(date, '%B, %Y, Cadastre RNB')
-        # IO files
-
-        unzipped_folder_path = raw_base_folder/ RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
-        self.vectors_layer_raw_path = unzipped_folder_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}.csv"
-        self.preprocessed_buildings_layer_filename = 'batiments.shp' # TODO voir s'il n'est pas préférable de faire l'export CSV au lieu de ShapeFile
-        
-        # vérification des paramètres
-        self.check_params()
+    def build_resulting_vectors_file_path(self, unzipped_path : Path) -> Path :
+        return unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}.csv"
+    
+    def build_version_cadastre(self, date : datetime): 
+        return datetime.strftime(date, '%B, %Y, Cadastre R.N.B.')
     
     def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):
         """
