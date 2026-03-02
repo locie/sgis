@@ -32,11 +32,11 @@ class PreprocessEtalab(VectorsPreprocess):
         # vérification des paramètres
         self.check_params()
         
-    def update_fields(self, preprocessed_vector):   
+    def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):   
         """
         Add ID
         """ 
-        return self.qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
+        return qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
         
     def final_check(self, preprocessed_vector):
         # vérification que les attributs sont les bons, par exemple code dep sur 3 digits

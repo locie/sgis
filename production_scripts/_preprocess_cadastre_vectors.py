@@ -29,9 +29,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
             if(dest_folder_path == None):
                   dest_folder_path = environ['HOME']
             
-            # crée une instance de VectorTools
-            self.qgis_vec_tools = VectorTools()
-            
             # paramètres d'entrée communs à Etalab et RNB
             self.dept_code = dept_code
             
@@ -76,30 +73,32 @@ class VectorsPreprocess(ABC): # Classe abstraite
             7. Exports the preprocessed vector layer to a shapefile format
             8. Writes version information for cadastre and BDORTHO data to files
             """
-            
-            if(sys_gettrace() is not None):
-                  # en mode debug uniquement -> on active la capture des messages QGIS
-                  self.qgis_vec_tools.catch_qgis_messages_enable()
-            
-            raw_vector = self.qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dept_code}')
-            raw_vector = self.qgis_vec_tools.copy_layer(raw_vector)
-            preprocessed_vector, unwanted_buildings_number, initial_buildings_number = self.qgis_vec_tools.remove_small_features(raw_vector, MIN_AREA_M2)
-            preprocessed_vector = self.qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
-            preprocessed_vector = self.qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
-            preprocessed_vector = self.update_fields(preprocessed_vector)
-            self.qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
+              # crée une instance de VectorTools
+            with VectorTools() as qgis_vec_tools:
+                  
+                  if(sys_gettrace() is not None):
+                        # en mode debug uniquement -> on active la capture des messages QGIS
+                        qgis_vec_tools.catch_qgis_messages_enable()
+                  
+                  raw_vector = qgis_vec_tools.load_layer(self.vectors_layer_raw_path, f'batiments_{self.dept_code}')
+                  raw_vector = qgis_vec_tools.copy_layer(raw_vector)
+                  preprocessed_vector, unwanted_buildings_number, initial_buildings_number = qgis_vec_tools.remove_small_features(raw_vector, MIN_AREA_M2)
+                  preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
+                  preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
+                  preprocessed_vector = self.update_fields(qgis_vec_tools, preprocessed_vector)
+                  qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
 
-            with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:
-                  f.write(self.version_cadastre)
-            with open(f'{self.output_dir_path}/version_BDORTHO', 'w') as f:
-                  version_BDORTHO = f'{self.year}, BDOrtho database, IGN (RGB, resolution {self.resolution}cm)'
-                  f.write(version_BDORTHO)
-            
-            self.final_check(preprocessed_vector)
+                  with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:
+                        f.write(self.version_cadastre)
+                  with open(f'{self.output_dir_path}/version_BDORTHO', 'w') as f:
+                        version_BDORTHO = f'{self.year}, BDOrtho database, IGN (RGB, resolution {self.resolution}cm)'
+                        f.write(version_BDORTHO)
+                  
+                  self.final_check(preprocessed_vector)
             
       
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
-      def update_fields(self, preprocessed_vector):
+      def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):
             return 
       
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   

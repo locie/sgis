@@ -34,7 +34,7 @@ class PreprocessRNB(VectorsPreprocess):
         # vérification des paramètres
         self.check_params()
     
-    def update_fields(self, preprocessed_vector):
+    def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):
         """
         Prepare a preprocessed vector layer for export by removing oversized fields and refactoring field widths.
         Removes RNB-specific fields that exceed the 254 character limit imposed by the Shapefile format.
@@ -42,10 +42,10 @@ class PreprocessRNB(VectorsPreprocess):
         """
          # remove RNB fields exceeding 254 characters which are not supported by shapefile format
         fields_to_remove = ["ext_ids", "addresses", "plots", "status"]
-        self.qgis_vec_tools.remove_fields(preprocessed_vector, fields_to_remove) # remove fields
+        qgis_vec_tools.remove_fields(preprocessed_vector, fields_to_remove) # remove fields
         # refactor fields of width 255 by truncating to 254.
         fields_to_refactor = ["rnb_id", "point"] 
-        preprocessed_vector = self.qgis_vec_tools.refactor_field_width(preprocessed_vector, fields_to_refactor, 254) 
+        preprocessed_vector = qgis_vec_tools.refactor_field_width(preprocessed_vector, fields_to_refactor, 254) 
         
     def final_check(self, preprocessed_vector):
         # TODO quelles vérifications pour RNB preprocessing ?
