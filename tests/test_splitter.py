@@ -23,7 +23,5 @@ class Test_splitter(unittest.TestCase):
         t_threads_num=6
         main(t_dep, t_year, t_resolution, t_threads_num, raw_folder_path=ts.UNITTESTS_FOLDER_PATH, dest_folder_path=ts.UNITTESTS_FOLDER_PATH)
         
-  # def test_split_rasters_from_rnb_bat(self):
-  #     t_dep='09'
-  #     t_date='2025-12-01'
-  #     main(t_dep, t_year )
+        # bash command :
+        # python -m unittest discover -s tests -k split_rasters
