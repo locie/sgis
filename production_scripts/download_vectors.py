@@ -8,6 +8,7 @@ import hashlib
 import pandas as pd
 from production_scripts.cadastre_data import RNB, Etalab
 from production_scripts.rnb_geo_api import normalize_dept_code_number
+from production_scripts.rnb_geo_api import request_all_rnb_csv_metadata
 
 RAW_DATA_BASE_FOLDER="LaCie_thebaulm"
 RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
@@ -31,9 +32,7 @@ def die(msg):
     print(msg)
     sys.exit(1)
 
-
 def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path = None):
-    
     #  construit les chemins d'entree/sortie
     if(raw_folder_path == None):
         home_path = Path.home()
@@ -78,10 +77,13 @@ def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path 
         print(f"{unzipped_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.")
     else:
         print(f"{unzipped_file_path}")
-    
     return data
-    
 
+def download_all_depts():
+    all_available_rnb_metadata = request_all_rnb_csv_metadata()
+    for c in all_available_rnb_metadata:
+        main(c.dept_code, data_type="rnb")
+    
 def download_file(url, output_path, chunk_size=CHUNCK_SIZE, expected_sha1=None):
     """
     Télécharge fichier depuis une url vers un dossier cible et retourne sha1 pour verifier l'integrite du fichier téléchargé

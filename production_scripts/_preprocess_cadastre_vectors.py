@@ -4,12 +4,7 @@ from os import environ
 from sgis.vector_tools import VectorTools
 from sys import gettrace as sys_gettrace
 from datetime import datetime
-
-RAW_FOLDERNAME="LaCie_thebaulm"
-RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
-RESOLUTION=20
-BUFFER_DISTANCE_M=4 # Distance tampon à ajouter autour des bâtiments, en mètres
-MIN_AREA_M2=10 # Seuil de suppression des petits bâtiments, en m²
+from _production_constants import *
 
 class VectorsPreprocess(ABC): # Classe abstraite
       """
@@ -23,7 +18,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
       vectors_layer_raw_path : str
       version_cadastre : str
       year : str
-      preprocessed_buildings_layer_filename : str
       
       def __init__(self, dept_code, cadastre_dir, resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
              # vérifie formatage cadastre_dir YYYY-MM-DD
@@ -63,12 +57,13 @@ class VectorsPreprocess(ABC): # Classe abstraite
             self.output_dir_path = dest_folder_path / "split" / self.dept_code/ self.year
             self.output_rasters_dir_path = self.output_dir_path / "rasters"
             self.output_vector_layer_dir_path =  self.output_rasters_dir_path / "preprocessing" / "vectors"  
+            
+            # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
+            self.raster_layers_dir_path = dest_folder_path / RELATIVE_TEMP_TILES_FOLDER_PATH / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
             self.create_output_dirs()
             self.check_params()
             
-            self.preprocessed_buildings_layer_filename = 'batiments.shp'
-            # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
-            self.raster_layers_dir_path = dest_folder_path / "temporary_LaCie" / "rasters" / "only_tiles"  / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
+            
             
             
       def check_params(self): #  checks input parameters before preprocessing
@@ -78,10 +73,13 @@ class VectorsPreprocess(ABC): # Classe abstraite
             raise FileNotFoundError(f'Cadastre data not found in {self.vectors_layer_raw_path.parent}')
       
       def create_output_dirs(self):
+            rasters_path = Path(self.raster_layers_dir_path)
+            if(not rasters_path.exists()):
+                  rasters_path.mkdir(parents=True)
             try:
-                  # PosixPath('/tmp/sgis/unittests/LaCie_thebaulm/gis/vectors/cadastre/2025-12-01/unzipped/cadastre-09-batiments-shp')
                   Path(self.output_rasters_dir_path).mkdir(parents=True)
                   Path(self.output_vector_layer_dir_path).mkdir(parents=True)
+                  
             except FileExistsError as e:
                   raise e
             
@@ -97,9 +95,8 @@ class VectorsPreprocess(ABC): # Classe abstraite
             7. Exports the preprocessed vector layer to a shapefile format
             8. Writes version information for cadastre and BDORTHO data to files
             """
-              # crée une instance de VectorTools
+            # crée une instance de VectorTools
             with VectorTools() as qgis_vec_tools:
-                  
                   if(sys_gettrace() is not None):
                         # en mode debug uniquement -> on active la capture des messages QGIS
                         qgis_vec_tools.catch_qgis_messages_enable()
@@ -110,7 +107,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   preprocessed_vector = qgis_vec_tools.add_buffer_distance(preprocessed_vector, BUFFER_DISTANCE_M)
                   preprocessed_vector = qgis_vec_tools.add_XY_coordinates(preprocessed_vector)
                   preprocessed_vector = self.update_fields(qgis_vec_tools, preprocessed_vector)
-                  qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, self.preprocessed_buildings_layer_filename)
+                  qgis_vec_tools.export_shp(preprocessed_vector, self.output_vector_layer_dir_path, PREPROCESSED_BUILDINGS_LAYER_FILENAME)
 
                   with open(f'{self.output_dir_path}/version_cadastre', 'w') as f:
                         f.write(self.version_cadastre)
@@ -135,4 +132,3 @@ class VectorsPreprocess(ABC): # Classe abstraite
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
       def final_check(self, preprocessed_vector):
             pass
-                      

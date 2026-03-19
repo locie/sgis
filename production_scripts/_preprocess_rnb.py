@@ -23,7 +23,7 @@ class PreprocessRNB(VectorsPreprocess):
         qgis_vec_tools.remove_fields(preprocessed_vector, fields_to_remove) # remove fields
         # refactor fields of width 255 by truncating to 254.
         fields_to_refactor = ["rnb_id", "point"] 
-        preprocessed_vector = qgis_vec_tools.refactor_field_width(preprocessed_vector, fields_to_refactor, 254) 
+        return qgis_vec_tools.refactor_field_width(preprocessed_vector, fields_to_refactor, 254) 
         
     def final_check(self, preprocessed_vector):
         # TODO quelles vérifications pour RNB preprocessing ?

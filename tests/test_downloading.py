@@ -6,8 +6,6 @@ from production_scripts import download_vectors as dwd
 from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
 from pathlib import Path
 
-
-
 class Test_Downloading(unittest.TestCase):
     
     @classmethod
@@ -46,14 +44,14 @@ class Test_Downloading(unittest.TestCase):
         
     @unittest.skip("Temporairement désactivé car test long")
     def test_download_cadastre_01_to_08(self):
-        dwd.main("rnb","01","2025-12-01")
-        dwd.main("rnb","02","2025-12-01")
-        dwd.main("rnb","03","2025-12-01")
-        dwd.main("rnb","04","2025-12-01")
-        dwd.main("rnb","05","2025-12-01")
-        dwd.main("rnb","06","2025-12-01")
-        dwd.main("rnb","07","2025-12-01")
-        dwd.main("rnb","08","2025-12-01")
+        dwd.main("01","rnb")
+        dwd.main("02","rnb")
+        dwd.main("03","rnb")
+        dwd.main("04","rnb")
+        dwd.main("05","rnb")
+        dwd.main("06","rnb")
+        dwd.main("07","rnb")
+        dwd.main("08","rnb")
             
 if __name__ == '__main__':
     unittest.main()

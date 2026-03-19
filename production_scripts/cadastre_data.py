@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
 
 BASE_ETALAB_URL="https://cadastre.data.gouv.fr/data/etalab-cadastre" # ETALAB
