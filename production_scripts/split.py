@@ -32,7 +32,7 @@ def main(dep : str, year : str, resolution : int, threads_num = int, raw_folder_
     output_root_path = dest_folder_path / "split" / dep / year
 
     output_directory_path = output_root_path / "rasters"
-    vector_layer_dir_preprocessed_path =  output_directory_path / "preprocessing" / "vectors"             
+    vector_layer_dir_preprocessed_path =  output_root_path / "preprocessing" / "vectors"             
     vector_layer_path_preprocessed_path = vector_layer_dir_preprocessed_path / name_preprocessed 
         
     # GO !

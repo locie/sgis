@@ -227,8 +227,8 @@ def request_all_rnb_csv_metadata() -> list[MetadataTuple] :
             if r.get("checksum"):   
                 url = r.get("url")            
                 sha1= r.get("checksum").get("value")
-                created_at = r.get("created_at")
-                dt = datetime.fromisoformat(created_at)
+                last_modified = r.get("last_modified")
+                dt = datetime.fromisoformat(last_modified)
                 formated_date = dt.strftime("%Y-%m-%d")
                 dep_int = get_dept_code_from_url(url)
                 
