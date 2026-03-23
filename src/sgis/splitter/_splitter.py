@@ -184,50 +184,55 @@ class Splitter():
             quotient, remainder = divmod(len(input_rasters), threads_num)
             if not overwrite_with_suffix:
                 logger.warning('`overwrite_with_suffix=False`: In case of a building spread over several rasters, only one image will be saved.')
+                
+            ######################################## fix_A #####################################################################################################
+            # if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
+            #     if (quotient == 0) and (remainder != 0):
+            #         logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
 
-            if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
-                if (quotient == 0) and (remainder != 0):
-                    logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
+            #     logger.info('Sequential mode')
+            #     for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+            #         logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+            #         self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
+            #         with open(progress_file, 'a') as f:
+            #             f.write(str(raster) + '\n')
+            #             logger.debug(f"Adding to progress file: '{raster}'")
+            # else:   
+                
+            # nerotb 18/07/2024: 
+            # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
+            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
+            # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
+        
+            # input_rasters = input_rasters[:quotient * threads_num]  # fix_A
+            ######################################## fix_A #####################################################################################################
+            
+            logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
 
-                logger.info('Sequential mode')
-                for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
-                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-                    self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
+
+            if not isinstance(threads_num, int):
+                raise TypeError(f'Invalid type for `threads_num`.')
+            logger.debug(f"Number of threads: {threads_num}")
+            if threads_num > 6:
+                logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
+
+            lock_file_write = Lock()
+            # [info] la Semaphore doit être appliquée en amont,
+            # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
+            def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
+                logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+                self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
+                with lock_file_write:
                     with open(progress_file, 'a') as f:
                         f.write(str(raster) + '\n')
                         logger.debug(f"Adding to progress file: '{raster}'")
-            else:   
-                
-                # nerotb 18/07/2024: 
-                # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
-                # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
-                # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
-            
-                input_rasters = input_rasters[:quotient * threads_num]  # fix_A
-                logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
 
-
-                if not isinstance(threads_num, int):
-                    raise TypeError(f'Invalid type for `threads_num`.')
-                logger.debug(f"Number of threads: {threads_num}")
-                if threads_num > 6:
-                    logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
-
-                lock_file_write = Lock()
-                # [info] la Semaphore doit être appliquée en amont,
-                # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
-                def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
-                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-                    self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
-                    with lock_file_write:
-                        with open(progress_file, 'a') as f:
-                            f.write(str(raster) + '\n')
-                            logger.debug(f"Adding to progress file: '{raster}'")
-
-                with ThreadPoolExecutor(threads_num) as executor:
-                    for idx, raster in enumerate(input_rasters):
-                        executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
-                self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
+            with ThreadPoolExecutor(threads_num) as executor:
+                for idx, raster in enumerate(input_rasters):
+                    executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
+            ######################################## fix_A ########################################      
+            # self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
+            ######################################## fix_A ########################################
 
 
     def _find_split_intersect(self, qgis : VectorTools, raster, shapefile, overwrite_with_suffix):

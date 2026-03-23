@@ -16,7 +16,10 @@ class Test_splitter(unittest.TestCase):
 
     def test_split_rasters_from_RNB_buildings(self):
         #   rm -r /tmp/sgis/unittests/split/
-        #   cp -rs /tmp/sgis/unittests/temporary_LaCie/only_tiles/09/2025/09-2025-0M20-RGB/. /tmp/sgis/unittests/temporary_LaCie/rasters/only_tiles/09/2024/09-2024-0M20-RGB/
+        ##  COPIER MANUELLEMENT LES 8 PREMIERES TUILES :
+        #   mkdir -p /tmp/sgis/unittests/split/09/2026/rasters/only_tiles/09-2026-0M20-RGB/
+        #   ls ~/temporary_LaCie/rasters/only_tiles/09/2026/09-2026-0M20-RGB/ | head -n 16 | xargs -I {} cp -rs ~/temporary_LaCie/rasters/only_tiles/09/2026/09-2026-0M20-RGB/{} /tmp/sgis/unittests/temporary_LaCie/rasters/only_tiles/09/2026/09-2026-0M20-RGB/
+    
         t_dep='09'
         t_year='2026'
         t_resolution=20

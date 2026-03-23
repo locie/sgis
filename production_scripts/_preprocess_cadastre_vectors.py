@@ -56,7 +56,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
             # chemins de destination des données prétraitées
             self.output_dir_path = dest_folder_path / "split" / self.dept_code/ self.year
             self.output_rasters_dir_path = self.output_dir_path / "rasters"
-            self.output_vector_layer_dir_path =  self.output_rasters_dir_path / "preprocessing" / "vectors"  
+            self.output_vector_layer_dir_path =  self.output_dir_path / "preprocessing" / "vectors"  
             
             # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
             self.raster_layers_dir_path = dest_folder_path / RELATIVE_TEMP_TILES_FOLDER_PATH / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"

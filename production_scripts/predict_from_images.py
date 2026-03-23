@@ -36,7 +36,7 @@ from sgis.classifier import *
 
 print(f'Prediction on department {dep} (year {year}) with share {share}')
 
-home = environ['HOME']
+home = '/tmp/sgis/unittests'
 my_model = load_model(rf'{home}/classification/models/{model}/saved_models/{model}.metadata', 
                       rf'{home}/classification/models/{model}/saved_models/{model}_{epoch}.keras')
 
