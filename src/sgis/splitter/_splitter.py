@@ -11,6 +11,7 @@ from qgis.core import QgsFeature, QgsField, QgsRasterLayer, QgsVectorLayer
 from tqdm import tqdm
 from sgis._utils import get_logger, prepare_paths
 from sgis.vector_tools import VectorTools
+import subprocess
 
 ID_ETALAB_FIELD_NAME = "ID"
 ID_RNB_FIELD_NAME = "rnb_id"
@@ -233,7 +234,7 @@ class Splitter():
             ######################################## fix_A ########################################      
             # self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
             ######################################## fix_A ########################################
-
+            
 
     def _find_split_intersect(self, qgis : VectorTools, raster, shapefile, overwrite_with_suffix):
         '''
@@ -402,3 +403,57 @@ class Splitter():
             'MULTITHREADING': False,  # no effect
         }
         run('gdal:cliprasterbymasklayer', params)
+# end class
+
+def check_images_counts(rasters_folder_path):
+    def run(cmd):
+        return int(subprocess.check_output(cmd, shell=True, text=True).strip())
+    
+    logger = get_logger()
+    images_fp = rasters_folder_path / "images"
+    repart_fp = rasters_folder_path / "repartition_by_rasters"
+    
+    jpg_count_cmd = rf'find {images_fp} -iname "*.jpg" | wc -l'
+    underscore_jpg_count_cmd = rf'find {images_fp} -iname "*_*.jpg" | wc -l'
+    small_jpg_count_cmd = rf'find {images_fp} -iname "*.jpg" -size -100c | wc -l'
+    progress_file_lines_count_cmd = rf'cat {rasters_folder_path}/progress.txt | wc -l'
+    file_count_cmd = rf'ls {repart_fp} | wc -l'
+    
+    jpg_count = run(jpg_count_cmd)
+    underscore_jpg_count = run(underscore_jpg_count_cmd)
+    small_jpg_count = run(small_jpg_count_cmd)
+    progress_file_lines_count = run(progress_file_lines_count_cmd)
+    file_count = run(file_count_cmd)
+    
+    # Checks images counts:
+    theoric_number  = jpg_count -  underscore_jpg_count
+    images_diff =  theoric_number - file_count
+    if(images_diff == 0):
+        logger.info("Number of buildings obtained after splitting is OK")
+    elif(images_diff == small_jpg_count):
+        logger.info("Number of buildings obtained after splitting is OK after removing smallest images")
+    else:
+        logger.warning("Number of buildings obtained after splitting is incoherent")
+    
+    # Edit files "notes"
+    count_lines =   (
+                        f"\n\n{jpg_count_cmd}\n{jpg_count}\n"
+                        f"{underscore_jpg_count_cmd}\n{underscore_jpg_count}\n"
+                        f"{small_jpg_count_cmd}\n{small_jpg_count}\n"
+                        f"{progress_file_lines_count_cmd}\n{progress_file_lines_count}\n"
+                        f"{file_count_cmd}\n{file_count}\n\n\n"
+                    )
+                    
+    additional  =   (
+                    f"# ls ~/temporary_LaCie/rasters/only_tiles/[...]/*jp2 | wc -l\n"
+                    f"# find rasters/images -iname \"*.jpg\" -size -100c -delete\n\n\n"
+                    )
+                    
+    end_notes   =   (
+                    f"# Verification:\n"
+                    f"# - nombre théorique : {jpg_count} - {underscore_jpg_count} =  {images_diff}\n"
+                    f"# - nombre obtenu : {jpg_count} - {small_jpg_count} =  {jpg_count - small_jpg_count}\n"
+                    )
+    
+    with open("notes.txt", "w", encoding="utf-8") as f:
+        f.write(count_lines + additional + end_notes)

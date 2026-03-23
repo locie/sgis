@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import test_setup as ts
+from pathlib import Path
 import unittest # The test framework
 from production_scripts.split import main
+from sgis.splitter._splitter import check_images_counts
 
 class Test_splitter(unittest.TestCase):
     def test_split_rasters_from_etalab_buildings(self):
@@ -28,3 +30,7 @@ class Test_splitter(unittest.TestCase):
         
         # bash command :
         # python -m unittest discover -s tests -k split_rasters
+        
+    def test_split_edit_final_notes(self):
+        rasters_folder_path = Path("/tmp/sgis/unittests/split/09/2026/rasters/");
+        check_images_counts(rasters_folder_path)
