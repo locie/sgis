@@ -1,3 +1,18 @@
+# exemple appel:
+"""
+Modify the raw layer from Etalab or RNB data:
+
+- adding a buffer distance around building (default 4m)
+- adding a unique ID to each building
+- removing small buildings (ground footprint < 10m2)
+
+Produced data is stored locally.
+
+activate_PV_detection;
+dep=10;year=2024;resolution=20;cadastre_dir=2026-01-01
+python ~/sgis/production_scripts/preprocess.py --dep $dep --year $year --cadastre_dir ${cadastre_dir} --resolution $resolution
+"""
+
 import argparse
 from production_scripts._preprocess_etalab import PreprocessEtalab
 from production_scripts._preprocess_rnb import PreprocessRNB
@@ -24,7 +39,7 @@ if __name__ == "__main__":
       parser.add_argument("--dep", type=str, required=True, help="Department code: 2 digits from 01 to 99 else 3 digits")
       # parser.add_argument("--year", type=str, required=True, help='BDOrtho version [YYYY]')
       parser.add_argument("--cadastre_dir", required=True, 
-                              help="Etalab version, and the name of the corresponding data diretory on ~/LaCie_thebaulm. [YYYY-MM-DD]" 
+                              help="The name of the corresponding data diretory on ~/LaCie_thebaulm. [YYYY-MM-DD]" 
                               "A similar name is exported in file `version_cadastre`.")
       parser.add_argument("--resolution", type=int, default=20, help='Raster resolution, in cm. Exported in `version_BDORTHO`.')
       args = parser.parse_args()

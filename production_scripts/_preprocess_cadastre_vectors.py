@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from sgis._utils import get_logger, add_file_logging
 from pathlib import Path
 from os import environ
 from sgis.vector_tools import VectorTools
@@ -20,7 +21,10 @@ class VectorsPreprocess(ABC): # Classe abstraite
       year : str
       
       def __init__(self, dept_code, cadastre_dir, resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
-             # vérifie formatage cadastre_dir YYYY-MM-DD
+           
+            
+                        
+            # vérifie formatage cadastre_dir YYYY-MM-DD
             try:
                   date = datetime.strptime(cadastre_dir, '%Y-%m-%d')
             except ValueError as e:
@@ -48,6 +52,10 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   self.prefix = f'0{dept_code}'
             else:
                   self.prefix = dept_code
+                  
+            # Tout (affichages + erreurs) est consigné dans le fichier 
+            logger = get_logger()
+            add_file_logging("output4.log")
 
             #  chemin des données sources (unzipped)
             unzipped_path = raw_folder_path / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
