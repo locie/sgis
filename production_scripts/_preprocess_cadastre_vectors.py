@@ -19,11 +19,10 @@ class VectorsPreprocess(ABC): # Classe abstraite
       vectors_layer_raw_path : str
       version_cadastre : str
       year : str
+      log_file_path : str
       
       def __init__(self, dept_code, cadastre_dir, resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
            
-            
-                        
             # vérifie formatage cadastre_dir YYYY-MM-DD
             try:
                   date = datetime.strptime(cadastre_dir, '%Y-%m-%d')
@@ -53,10 +52,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
             else:
                   self.prefix = dept_code
                   
-            # Tout (affichages + erreurs) est consigné dans le fichier 
-            logger = get_logger()
-            add_file_logging("output4.log")
-
             #  chemin des données sources (unzipped)
             unzipped_path = raw_folder_path / RELATIVE_VECTORS_CADASTRE_FOLDER_PATH / self.cadastre_dir / "unzipped"
             self.vectors_layer_raw_path = self.build_resulting_vectors_file_path(unzipped_path)
@@ -66,9 +61,15 @@ class VectorsPreprocess(ABC): # Classe abstraite
             self.output_rasters_dir_path = self.output_dir_path / "rasters"
             self.output_vector_layer_dir_path =  self.output_dir_path / "preprocessing" / "vectors"  
             
-            # chemin du dossier temmporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
+            # chemin du dossier temporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
             self.raster_layers_dir_path = dest_folder_path / RELATIVE_TEMP_TILES_FOLDER_PATH / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
             self.create_output_dirs()
+            
+            # Tout (affichages + erreurs) est consigné dans le fichier preprocessing.log
+            self.log_file_path = self.output_vector_layer_dir_path / "preprocessing.log"
+            logger = get_logger()
+            add_file_logging(self.log_file_path)
+            
             self.check_params()
             
       def check_params(self): #  checks input parameters before preprocessing
@@ -125,6 +126,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
                         f.write(version_BDORTHO)
                   
                   self.final_check(preprocessed_vector)
+                  
             
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
       def build_resulting_vectors_file_path(self, unzipped_path : Path) -> Path :

@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from math import isinf
+import re
 from threading import Lock
 from time import perf_counter
 from sys import stderr, stdout
@@ -10,8 +11,10 @@ from processing import run
 from qgis.core import QgsFeature, QgsField, QgsRasterLayer, QgsVectorLayer
 from tqdm import tqdm
 from sgis._utils import get_logger, prepare_paths
+from sgis.splitter._splitting_recap import SplittingRecap
 from sgis.vector_tools import VectorTools
 import subprocess
+from shutil import copyfile
 
 ID_ETALAB_FIELD_NAME = "ID"
 ID_RNB_FIELD_NAME = "rnb_id"
@@ -187,10 +190,14 @@ class Splitter():
                 logger.warning('`overwrite_with_suffix=False`: In case of a building spread over several rasters, only one image will be saved.')
                 
             ######################################## fix_A #####################################################################################################
+            # nerotb 18/07/2024: 
+            # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
+            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
+            # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
             # if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
             #     if (quotient == 0) and (remainder != 0):
             #         logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
-
+            #
             #     logger.info('Sequential mode')
             #     for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
             #         logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
@@ -199,17 +206,10 @@ class Splitter():
             #             f.write(str(raster) + '\n')
             #             logger.debug(f"Adding to progress file: '{raster}'")
             # else:   
-                
-            # nerotb 18/07/2024: 
-            # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
-            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
-            # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
-        
             # input_rasters = input_rasters[:quotient * threads_num]  # fix_A
             ######################################## fix_A #####################################################################################################
             
             logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
-
 
             if not isinstance(threads_num, int):
                 raise TypeError(f'Invalid type for `threads_num`.')
@@ -234,6 +234,9 @@ class Splitter():
             ######################################## fix_A ########################################      
             # self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
             ######################################## fix_A ########################################
+            
+            # génére le fichier récapitulatif notes.txt
+            SplittingRecap(self._output_path).summarize
             
 
     def _find_split_intersect(self, qgis : VectorTools, raster, shapefile, overwrite_with_suffix):
@@ -404,56 +407,3 @@ class Splitter():
         }
         run('gdal:cliprasterbymasklayer', params)
 # end class
-
-def check_images_counts(rasters_folder_path):
-    def run(cmd):
-        return int(subprocess.check_output(cmd, shell=True, text=True).strip())
-    
-    logger = get_logger()
-    images_fp = rasters_folder_path / "images"
-    repart_fp = rasters_folder_path / "repartition_by_rasters"
-    
-    jpg_count_cmd = rf'find {images_fp} -iname "*.jpg" | wc -l'
-    underscore_jpg_count_cmd = rf'find {images_fp} -iname "*_*.jpg" | wc -l'
-    small_jpg_count_cmd = rf'find {images_fp} -iname "*.jpg" -size -100c | wc -l'
-    progress_file_lines_count_cmd = rf'cat {rasters_folder_path}/progress.txt | wc -l'
-    file_count_cmd = rf'ls {repart_fp} | wc -l'
-    
-    jpg_count = run(jpg_count_cmd)
-    underscore_jpg_count = run(underscore_jpg_count_cmd)
-    small_jpg_count = run(small_jpg_count_cmd)
-    progress_file_lines_count = run(progress_file_lines_count_cmd)
-    file_count = run(file_count_cmd)
-    
-    # Checks images counts:
-    theoric_number  = jpg_count -  underscore_jpg_count
-    images_diff =  theoric_number - file_count
-    if(images_diff == 0):
-        logger.info("Number of buildings obtained after splitting is OK")
-    elif(images_diff == small_jpg_count):
-        logger.info("Number of buildings obtained after splitting is OK after removing smallest images")
-    else:
-        logger.warning("Number of buildings obtained after splitting is incoherent")
-    
-    # Edit files "notes"
-    count_lines =   (
-                        f"\n\n{jpg_count_cmd}\n{jpg_count}\n"
-                        f"{underscore_jpg_count_cmd}\n{underscore_jpg_count}\n"
-                        f"{small_jpg_count_cmd}\n{small_jpg_count}\n"
-                        f"{progress_file_lines_count_cmd}\n{progress_file_lines_count}\n"
-                        f"{file_count_cmd}\n{file_count}\n\n\n"
-                    )
-                    
-    additional  =   (
-                    f"# ls ~/temporary_LaCie/rasters/only_tiles/[...]/*jp2 | wc -l\n"
-                    f"# find rasters/images -iname \"*.jpg\" -size -100c -delete\n\n\n"
-                    )
-                    
-    end_notes   =   (
-                    f"# Verification:\n"
-                    f"# - nombre théorique : {jpg_count} - {underscore_jpg_count} =  {images_diff}\n"
-                    f"# - nombre obtenu : {jpg_count} - {small_jpg_count} =  {jpg_count - small_jpg_count}\n"
-                    )
-    
-    with open("notes.txt", "w", encoding="utf-8") as f:
-        f.write(count_lines + additional + end_notes)

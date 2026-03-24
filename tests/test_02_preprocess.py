@@ -4,7 +4,6 @@ import unittest
 
 from production_scripts import preprocess
 from production_scripts import download_vectors as dwd 
-from pathlib import Path
 from datetime import datetime
 
 class Test_Preprocessing(unittest.TestCase):

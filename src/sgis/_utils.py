@@ -48,45 +48,29 @@ def get_logger():
 
     return logger
 
-def add_file_logging(log_path):
+def add_file_logging(log_file_path):
     logger = get_logger()
     # File handler for logger
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler = logging.FileHandler(log_file_path, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(FORMATTER2)
+    file_handler.setFormatter(FORMATTER1)
     logger.addHandler(file_handler)
-    # Redirect stdout and stderr to the same file
-    sys.stdout = StreamToLogger(logger, logging.INFO, FORMATTER1)
-    sys.stderr = StreamToLogger(logger, logging.ERROR, FORMATTER2)
-       
-# class StreamToLogger: def __init__(self, logger, level): self.logger = logger self.level = level def write(self, message): message = message.strip() if message: self.logger.log(self.level, message) def flush(self): pass
-
+    # Redirect stdout and stderr to the same file log_file_path
+    sys.stdout = StreamToLogger(logger, logging.INFO)
+    sys.stderr = StreamToLogger(logger, logging.ERROR)
+   
 class StreamToLogger:
     """
     Redirects a stream (stdout/stderr) into the logger
-    and applies the specified formatter.
     """
-    def __init__(self, logger, level, formatter):
+    def __init__(self, logger, level):
         self.logger = logger
         self.level = level
-        self.formatter = formatter
 
     def write(self, message):
         message = message.strip()
         if message:
-            # Wrap the message in a LogRecord to apply the formatter
-            record = self.logger.makeRecord(
-                name=self.logger.name,
-                level=self.level,
-                fn='',
-                lno=0,
-                msg=message,
-                args=None,
-                exc_info=None
-            )
-            formatted = self.formatter.format(record)
-            # Use a simple handler-less logger call to print formatted message
-            print(formatted, file=sys.__stdout__ if self.level < logging.ERROR else sys.__stderr__)
+            self.logger.log(self.level, message, stacklevel=2)
 
     def flush(self):
         pass
