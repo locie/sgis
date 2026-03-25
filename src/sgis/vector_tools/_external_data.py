@@ -6,10 +6,13 @@ from qgis.core import (QgsGeometry,
                        QgsField
                        )
 from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
+from qgis.core import QgsVectorLayer
 from .._utils import get_logger, prepare_paths
 
 class QgisExternalData:
-    def add_protected_buildings(self, layer, layer_protected_buildings):
+    
+    id_field = "ID"  # or rnb_id
+    def add_protected_buildings(self, layer : QgsVectorLayer, layer_protected_buildings : QgsVectorLayer):
         """Quite specific to the French case. Add a boolean attribute, for every building of a vector layer, that states whether 
         this building is included in an architectural protected area.
 
@@ -99,7 +102,7 @@ class QgisExternalData:
         return joint_predictions
 
 
-    def add_roof_type(self, layer, roof_data_path):
+    def add_roof_type(self, layer : QgsVectorLayer, roof_data_path):
         """Quite specific to the French case. Add to a building vector layer a 'toiture' attribute that describes the most-likely
         roof type (material, color) of the building.
 
@@ -112,7 +115,7 @@ class QgisExternalData:
             The layer to process. Every feature is a building.
             Must have the following attributes: 
             
-            - 'ID': str, identifier of the building
+            - 'ID' or 'rnb_id': str, identifier of the building
 
             - 'commune': str, post-code of the village of the building
 
@@ -185,7 +188,7 @@ class QgisExternalData:
         features = list(layer.getFeatures())
         data = []
         for f in features:
-            ID = f['ID']
+            ID = f[self.id_field]
             commune = f['commune']
             try:
                 toiture = sr[commune]
@@ -193,14 +196,14 @@ class QgisExternalData:
                 logger.warning(f"Missing commune {commune} in the input data, replacing with 'UNKNOWN'")
                 toiture = 'UNKNOWN'
             data.append([ID, toiture])
-        df_ref = DataFrame(data, columns=['ID', 'toiture']).set_index('ID')
+        df_ref = DataFrame(data, columns=[self.id_field, 'toiture']).set_index(self.id_field)
 
         self.update_on_ID(layer, df_ref)
 
         return df.groupby('mat_toit_txt').count().iloc[:,0].sort_values(ascending=False)
 
 
-    def merge_overlapped_buildings(self, layer, reference_field_name='Score', min_field_value=None):
+    def merge_overlapped_buildings(self, layer : QgsVectorLayer, reference_field_name='Score', min_field_value=None):
         """Merge every couple of features whose geometries intersect. 
 
 
@@ -358,7 +361,7 @@ class QgisExternalData:
                 _ = layer.changeGeometry(leading_feature.id(), geom)
 
 
-    def update_on_ID(self, layer, dataframe):
+    def update_on_ID(self, layer : QgsVectorLayer, dataframe : DataFrame):
         """Add the data of a DataFrame to the attribute table of a vector layer.
 
         Columns of the DataFrame become attributes of the layer.
@@ -366,7 +369,7 @@ class QgisExternalData:
         Parameters
         ----------
         layer : QgsVectorLayer
-            Layer to process. Must have an 'ID' attribute that corresponds to the index of `dataframe`.
+            Layer to process. Must have an 'ID' or 'rnb_id' attribute that corresponds to the index of `dataframe`.
         dataframe : pandas.DataFrame
             Index of DataFrame must be the ID of the building, with a str dtype.
         Raises
@@ -382,15 +385,19 @@ class QgisExternalData:
         
         `dataframe` is not modified by these operations.
         """
-        # todo: possible upgrade: generalize to a left merge (i.e. `layer` as reference) using any other possible column than `ID`
-        # --> useful for roof types
-        assert 'ID' in layer.fields().names()
+        fields = layer.fields().names()
+
+        assert any(f in fields for f in ("ID", "rnb_id")), \
+            "Layer must contain either 'ID' or 'rnb_id' field"
+
+        # pick the one that exists
+        self.id_field = "ID" if "ID" in fields else "rnb_id"
 
         logger = get_logger()
 
         dataframe = dataframe.copy()
         try:
-            dataframe.pop('ID')
+            dataframe.pop(self.id_field)
         except KeyError as e:
             pass
         else:
@@ -400,7 +407,7 @@ class QgisExternalData:
         logger.info('Modifying DataFrame index')
         mapper_id = {}
         for feature in layer.getFeatures():
-            mapper_id[feature['ID']] = feature.id()
+            mapper_id[feature[self.id_field]] = feature.id()
         dataframe.index = dataframe.index.map(mapper_id)
         dataframe = dataframe[~dataframe.index.isna()]          # ignore features that do not correspond to a feature ID
 
@@ -442,7 +449,7 @@ class QgisExternalData:
         #             for col_name, value in data.to_dict().items():  # `to_dict` returns Python types, contrary to `items()` that returns Numpy dtypes
         #                 feature[col_name] = value
         #                 layer.updateFeature(feature)
-    def _export(self, layer, path):
+    def _export(self, layer : QgsVectorLayer, path):
         processing.run(
             "native:savefeatures",
             {

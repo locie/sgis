@@ -6,6 +6,7 @@ from sgis.vector_tools import VectorTools
 from sys import gettrace as sys_gettrace
 from datetime import datetime
 from _production_constants import *
+from qgis.core import QgsVectorLayer
 
 class VectorsPreprocess(ABC): # Classe abstraite
       """
@@ -137,9 +138,9 @@ class VectorsPreprocess(ABC): # Classe abstraite
             return 
       
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
-      def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):
+      def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector : QgsVectorLayer):
             return 
       
       @abstractmethod # méthode définie dans les classes fille PreprocessEtalab et PreprocessRNB   
-      def final_check(self, preprocessed_vector):
+      def final_check(self, preprocessed_vector : QgsVectorLayer):
             pass

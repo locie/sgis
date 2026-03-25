@@ -1,6 +1,7 @@
 # #!/usr/bin/env python3
 from production_scripts._preprocess_cadastre_vectors import * 
 from pathlib import Path
+from qgis.core import QgsVectorLayer
 
 class PreprocessRNB(VectorsPreprocess):
     """
@@ -12,7 +13,7 @@ class PreprocessRNB(VectorsPreprocess):
     def build_version_cadastre(self, date : datetime): 
         return datetime.strftime(date, '%B, %Y, Cadastre R.N.B.')
     
-    def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector):
+    def update_fields(self, qgis_vec_tools : VectorTools, preprocessed_vector : QgsVectorLayer):
         """
         Prepare a preprocessed vector layer for export by removing oversized fields and refactoring field widths.
         Removes RNB-specific fields that exceed the 254 character limit imposed by the Shapefile format.
@@ -25,7 +26,7 @@ class PreprocessRNB(VectorsPreprocess):
         fields_to_refactor = ["rnb_id", "point"] 
         return qgis_vec_tools.refactor_field_width(preprocessed_vector, fields_to_refactor, 254) 
         
-    def final_check(self, preprocessed_vector):
+    def final_check(self, preprocessed_vector : QgsVectorLayer):
         # TODO quelles vérifications pour RNB preprocessing ?
         pass
                    

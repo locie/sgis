@@ -8,13 +8,12 @@ python ~/sgis/production_scripts/predict_from_images.py --dep $dep --year $year 
 """
 import argparse
 from os import environ
+from production_scripts._production_constants import DEFAULT_CLASSIFIER_GPU, DEFAULT_CLASSIFIER_MODEL, DEFAULT_CLASSIFIER_SHARE_VALUE
 from sgis.classifier import *
 
-DEFAULT_SHARE_VALUE = 0.99999
-DEFAULT_MODEL = '2C_22_34_35_67_73__V14'
-DEFAULT_GPU = 'true'
 
-def main(dep, year, epoch, model = DEFAULT_MODEL, share = DEFAULT_SHARE_VALUE, gpu = DEFAULT_GPU ):
+
+def main(dep, year, epoch, model = DEFAULT_CLASSIFIER_MODEL, share = DEFAULT_CLASSIFIER_SHARE_VALUE, gpu = DEFAULT_CLASSIFIER_GPU ):
     epoch = f"{epoch:0>3d}"
     assert gpu in ('true', 'false')
     if gpu == 'false':  
@@ -36,10 +35,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--dep", type=str, required=True, help="Department code: 2 digits from 01 to 99 else 3 digits")
     parser.add_argument("--year", type=str, required=True, help='BDOrtho version [YYYY]')
-    parser.add_argument("--model", required=True, default=DEFAULT_MODEL, help="Name of the CNN model, without extension, without epoch")
+    parser.add_argument("--model", required=True, default=DEFAULT_CLASSIFIER_MODEL, help="Name of the CNN model, without extension, without epoch")
     parser.add_argument("--epoch", required=True, type=int, help="Training epoch to be used. Refines the model argument.")
-    parser.add_argument("--share", default=DEFAULT_SHARE_VALUE, type=float, help="Share of available images to apply prediction on. Must be different than 1.")
-    parser.add_argument("--gpu", default=DEFAULT_GPU, choices=('true', 'false'), help="Whether the machine GPU is used for prediction")
+    parser.add_argument("--share", default=DEFAULT_CLASSIFIER_SHARE_VALUE, type=float, help="Share of available images to apply prediction on. Must be different than 1.")
+    parser.add_argument("--gpu", default=DEFAULT_CLASSIFIER_GPU, choices=('true', 'false'), help="Whether the machine GPU is used for prediction")
     args = parser.parse_args()
 
     dep = args.dep

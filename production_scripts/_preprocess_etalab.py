@@ -1,6 +1,6 @@
 # #!/usr/bin/env python3
 from production_scripts._preprocess_cadastre_vectors import *
-
+from qgis.core import QgsVectorLayer
 from pathlib import Path
 
 class PreprocessEtalab(VectorsPreprocess):
@@ -19,7 +19,7 @@ class PreprocessEtalab(VectorsPreprocess):
         """ 
         return qgis_vec_tools.add_ID(preprocessed_vector, self.prefix)
         
-    def final_check(self, preprocessed_vector):
+    def final_check(self, preprocessed_vector : QgsVectorLayer):
         # vérification que les attributs sont les bons, par exemple code dep sur 3 digits
         attributes = preprocessed_vector.getFeature(500).attributeMap()
         if attributes['ID'][:3] != self.prefix:
