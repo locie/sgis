@@ -24,7 +24,7 @@ class Test_splitter(unittest.TestCase):
         t_dep='09'
         t_year='2026'
         t_resolution=20
-        t_threads_num=6
+        t_threads_num=1
         main(t_dep, t_year, t_resolution, t_threads_num, raw_folder_path=ts.UNITTESTS_FOLDER_PATH, dest_folder_path=ts.UNITTESTS_FOLDER_PATH)
         
         # errors reached : 
@@ -44,3 +44,4 @@ class Test_splitter(unittest.TestCase):
         rasters_folder_path = Path("/tmp/sgis/unittests/split/09/2026/")
         s = SplittingRecap(rasters_folder_path)
         s.summarize()
+        
