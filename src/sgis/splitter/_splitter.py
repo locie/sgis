@@ -177,11 +177,11 @@ class Splitter():
         '''
         logger = get_logger()
         with VectorTools() as qgis_inst:
-            if(True):
+            if(True): #TODO
             # if(sys_gettrace() is not None):
                 # en mode debug uniquement -> on active la capture des messages QGIS
                 qgis_inst.catch_qgis_messages_enable()
-                  
+                    
             shapefile = str(self._vector_layer_path)
             input_rasters, progress_file = self._determine_unprocessed_rasters()
             if threads_num is None:
@@ -189,55 +189,53 @@ class Splitter():
             quotient, remainder = divmod(len(input_rasters), threads_num)
             if not overwrite_with_suffix:
                 logger.warning('`overwrite_with_suffix=False`: In case of a building spread over several rasters, only one image will be saved.')
+
+            if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
+                if (quotient == 0) and (remainder != 0):
+                    logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
+
+                logger.info('Sequential mode')
+                for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+                    self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
+                    with open(progress_file, 'a') as f:
+                        f.write(str(raster) + '\n')
+                        logger.debug(f"Adding to progress file: '{raster}'")
+            else:   
                 
-            ######################################## fix_A #####################################################################################################
-            # nerotb 18/07/2024: 
-            # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
-            # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
-            # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
-            # if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
-            #     if (quotient == 0) and (remainder != 0):
-            #         logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
-            #
-            logger.info('Sequential mode')
-            for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
-                logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-                self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
-                with open(progress_file, 'a') as f:
-                    f.write(str(raster) + '\n')
-                    logger.debug(f"Adding to progress file: '{raster}'")
-            # else:   
-            # input_rasters = input_rasters[:quotient * threads_num]  # fix_A
-            ######################################## fix_A #####################################################################################################
+                # nerotb 18/07/2024: 
+                # problème: terminaison dans le cas threadé: le dernier raster tourne en boucle sans être taité
+                # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
+                # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
             
-            # logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
+                input_rasters = input_rasters[:quotient * threads_num]  # fix_A
+                logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
 
-            # if not isinstance(threads_num, int):
-            #     raise TypeError(f'Invalid type for `threads_num`.')
-            # logger.debug(f"Number of threads: {threads_num}")
-            # if threads_num > 6:
-            #     logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
 
-            # lock_file_write = Lock()
-            # # [info] la Semaphore doit être appliquée en amont,
-            # # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
-            # def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
-            #     logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-            #     self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
-            #     with lock_file_write:
-            #         with open(progress_file, 'a') as f:
-            #             f.write(str(raster) + '\n')
-            #             logger.debug(f"Adding to progress file: '{raster}'")
+                if not isinstance(threads_num, int):
+                    raise TypeError(f'Invalid type for `threads_num`.')
+                logger.debug(f"Number of threads: {threads_num}")
+                if threads_num > 6:
+                    logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
 
-            # with ThreadPoolExecutor(threads_num) as executor:
-            #     for idx, raster in enumerate(input_rasters):
-            #         executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
-            ######################################## fix_A ########################################      
-            # self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
-            ######################################## fix_A ########################################
+                lock_file_write = Lock()
+                # [info] la Semaphore doit être appliquée en amont,
+                # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
+                def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
+                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+                    self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
+                    with lock_file_write:
+                        with open(progress_file, 'a') as f:
+                            f.write(str(raster) + '\n')
+                            logger.debug(f"Adding to progress file: '{raster}'")
+
+                with ThreadPoolExecutor(threads_num) as executor:
+                    for idx, raster in enumerate(input_rasters):
+                        executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
+                self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
             
-            # génére le fichier récapitulatif notes.txt
-            SplittingRecap(self._output_path).summarize
+        # génére le fichier récapitulatif notes.txt
+        SplittingRecap(self._output_path).summarize
             
 
     def _find_split_intersect(self, qgis : VectorTools, raster, shapefile, overwrite_with_suffix):
@@ -245,6 +243,7 @@ class Splitter():
         1) Compute the OMBB of each feature 2) test whether it intersects with the raster
         '''
         logger = get_logger()
+        logger.debug("loading layers")
         raster_layer = QgsRasterLayer(str(raster), raster.name)
         vector_layer = qgis.load_layer(str(shapefile), 'preprocessed_vector')
        
@@ -258,16 +257,20 @@ class Splitter():
         else:
             self.id_field_name = ID_ETALAB_FIELD_NAME
             
-     
+        logger.debug("vector_layer_OMBB creation")
         vector_layer_OMBB = QgsVectorLayer('Polygon',
                                         f'temporary_layer_{id(raster_layer)}',
                                         'memory')  # `id(...)` is just used to set a random identifier to make sure memory is not shared due to same name
+        logger.debug("dataProvider")
         pr = vector_layer_OMBB.dataProvider()
+        logger.debug("addAttributes")
         pr.addAttributes([QgsField(self.id_field_name, QVariant.String)])
+        logger.debug("updateFields")
         vector_layer_OMBB.updateFields()
+        logger.debug("setCrs")
         vector_layer_OMBB.setCrs(vector_layer.crs())
 
-
+        logger.debug("startEditing")
         vector_layer_OMBB.startEditing()
         raster_layer_extent = raster_layer.extent()
         data_provider = vector_layer_OMBB.dataProvider()
@@ -279,17 +282,17 @@ class Splitter():
 
             cond = raster_layer_extent.intersect(bounding_box).area()
             if cond and not isinf(cond):
-                # logger.debug(f"Feature with ID '{feature['ID']}' intersects raster '{raster.name}'") # fixme: uncomment
+                logger.debug(f"Feature with ID '{feature['ID']}' intersects raster '{raster.name}'") # fixme: uncomment
                 polygon = feature.geometry().orientedMinimumBoundingBox()[0]
 
                 ft = QgsFeature()
                 ft.setGeometry(polygon)
                 ft.setAttributes([feature[self.id_field_name]])
                 data_provider.addFeature(ft)
-
+        logger.debug("commiting changes")
         vector_layer_OMBB.commitChanges()
 
-
+        logger.debug("_define_images_names")
         self._define_images_names(
             input_vector=vector_layer_OMBB,
             input_raster=raster_layer,
@@ -320,7 +323,7 @@ class Splitter():
         out_folder = self._output_images_path
         vector_layer = input_vector
         raster_layer = input_raster
-
+        logger.debug("subsetString")
         vector_layer.subsetString()
 
         features = [str(i[self.id_field_name]) for i in vector_layer.getFeatures()]
@@ -341,7 +344,7 @@ class Splitter():
             if ((not exists) or overwrite_with_suffix):
                 args.append((q, path, filename))
 
-
+        logger.debug("writing images")
         # writing process is repeated until all files do exist on disk
         to_write = args.copy()
         count = 0
@@ -369,7 +372,7 @@ class Splitter():
 
         t1 = perf_counter()
 
-
+        logger.debug("writing csv")
         # improvement of raster tracability: association of image names and the corresponding raster
         # --> the names are the one that should have been written on disk, not the one actually written
         #       --> yet, since the writing process is repeated until success, both lists should be the same
