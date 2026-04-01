@@ -112,7 +112,7 @@ class SplittingRecap:
         end_notes   =   (
                             f"# Verification:\n"
                             f"# - nombre théorique : {self.initial_buildings_count} - {self.unwanted_buidings_count} =  {self.initial_buildings_count -  self.unwanted_buidings_count}\n"
-                            f"# - nombre obtenu : {self.jpg_count} - {self.small_jpg_count} =  {self.jpg_count - self.small_jpg_count}\n"
+                            f"# - nombre obtenu : {self.jpg_count} - {self.underscore_jpg_count} =  {self.jpg_count - self.underscore_jpg_count}\n"
                         )
         with open(self.final_notes_file, "a", encoding="utf-8") as f:
             f.write(count_lines + additional + end_notes)
@@ -121,7 +121,7 @@ class SplittingRecap:
         
         
     def _check_counts(self):
-        
+        logger = get_logger()
         # Checks images counts:
         theoric_number  = self.initial_buildings_count -  self.unwanted_buidings_count
         images_diff =  theoric_number - self.file_count

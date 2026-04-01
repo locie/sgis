@@ -7,7 +7,7 @@ from sys import stderr, stdout
 from sys import gettrace as sys_gettrace
 from PyQt5.QtCore import QVariant
 from pandas import DataFrame
-from processing import run
+from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
 from qgis.core import QgsFeature, QgsField, QgsRasterLayer, QgsVectorLayer
 from tqdm import tqdm
 from sgis._utils import get_logger, prepare_paths
@@ -199,13 +199,13 @@ class Splitter():
             #     if (quotient == 0) and (remainder != 0):
             #         logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
             #
-            #     logger.info('Sequential mode')
-            #     for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
-            #         logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-            #         self._find_split_intersect(raster, shapefile, overwrite_with_suffix)
-            #         with open(progress_file, 'a') as f:
-            #             f.write(str(raster) + '\n')
-            #             logger.debug(f"Adding to progress file: '{raster}'")
+            # logger.info('Sequential mode')
+            # for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+            #     logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+            #     self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
+            #     with open(progress_file, 'a') as f:
+            #         f.write(str(raster) + '\n')
+            #         logger.debug(f"Adding to progress file: '{raster}'")
             # else:   
             # input_rasters = input_rasters[:quotient * threads_num]  # fix_A
             ######################################## fix_A #####################################################################################################
@@ -258,17 +258,17 @@ class Splitter():
         else:
             self.id_field_name = ID_ETALAB_FIELD_NAME
             
-     
         vector_layer_OMBB = QgsVectorLayer('Polygon',
                                         f'temporary_layer_{id(raster_layer)}',
                                         'memory')  # `id(...)` is just used to set a random identifier to make sure memory is not shared due to same name
+        
         pr = vector_layer_OMBB.dataProvider()
         pr.addAttributes([QgsField(self.id_field_name, QVariant.String)])
         vector_layer_OMBB.updateFields()
         vector_layer_OMBB.setCrs(vector_layer.crs())
 
-
         vector_layer_OMBB.startEditing()
+
         raster_layer_extent = raster_layer.extent()
         data_provider = vector_layer_OMBB.dataProvider()
         logger.info(f'Computing overlap: {raster}')
@@ -286,9 +286,8 @@ class Splitter():
                 ft.setGeometry(polygon)
                 ft.setAttributes([feature[self.id_field_name]])
                 data_provider.addFeature(ft)
-
+                
         vector_layer_OMBB.commitChanges()
-
 
         self._define_images_names(
             input_vector=vector_layer_OMBB,
@@ -320,7 +319,6 @@ class Splitter():
         out_folder = self._output_images_path
         vector_layer = input_vector
         raster_layer = input_raster
-
         vector_layer.subsetString()
 
         features = [str(i[self.id_field_name]) for i in vector_layer.getFeatures()]
@@ -330,7 +328,6 @@ class Splitter():
         args = []
 
         formatter_ = lambda name: '"{}" = \'{}\''.format(self.id_field_name, name)
-
         for name in buildings:
             filename = f'{name}.jpg'
             exists, path = self._test_file_exists(out_folder, filename)
@@ -340,7 +337,6 @@ class Splitter():
 
             if ((not exists) or overwrite_with_suffix):
                 args.append((q, path, filename))
-
 
         # writing process is repeated until all files do exist on disk
         to_write = args.copy()
@@ -394,11 +390,16 @@ class Splitter():
         Call the `gdal:cliprasterbymasklayer` function using Qgis `processing`.
 
         '''
-        vector_layer.setSubsetString(q)
+        mask = processing.run("native:extractbyexpression", {
+            'INPUT': vector_layer,
+            'EXPRESSION': q,
+            'OUTPUT': 'TEMPORARY_OUTPUT'
+        })['OUTPUT']
+        
         params = {
             'INPUT': raster_layer,
             'OUTPUT': str(path),
-            'MASK': vector_layer,
+            'MASK': mask,
             'ALPHA_BAND': False,
             'CROP_TO_CUTLINE': True,
             'KEEP_RESOLUTION': True,
@@ -406,5 +407,5 @@ class Splitter():
             'DATA_TYPE': 0,
             'MULTITHREADING': False,  # no effect
         }
-        run('gdal:cliprasterbymasklayer', params)
+        processing.run('gdal:cliprasterbymasklayer', params)
 # end class
