@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+# Exemple
+"""
+Download a compressed version of the RNB or the Etalab cadastre for a given department, and extract it. Data is stored on Lacie. 
+
+RNB usage :
+activate_PV_detection;
+export PYTHONPATH=~/sgis;dep=09;data_type=rnb
+python ~/sgis/production_scripts/download_vectors.py --dep $dep --data_type ${data_type}
+
+Etalab usage :
+activate_PV_detection;
+export PYTHONPATH=~/sgis:$PYTHONPATH
+dep=09;data_type=etalab;date=2025-12-01
+python ~/sgis/production_scripts/download_vectors.py --dep $dep --data_type ${data_type} --date $date
+
+Date format must be: YYYY-MM-JJ
+Available month ("MM") must be checked on: https://cadastre.data.gouv.fr/datasets/cadastre-etalab
+"""
 import argparse
 import sys
 import requests
@@ -33,6 +51,7 @@ def die(msg):
     sys.exit(1)
 
 def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path = None):
+    
     #  construit les chemins d'entree/sortie
     if(raw_folder_path == None):
         home_path = Path.home()
@@ -63,7 +82,7 @@ def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path 
     # verify sha1 before unzip (only for RNB because sha1 is unavailable for etalab)
     if(data_type == "rnb"):
         if f_hash != data.expected_hash:
-            raise ValueError(f"Downloading is finished of {data.url} but actual sha1: {f_hash} mismatchs the expected sha1: {data.expected_hash} ")
+            raise ValueError(f"Downloading is finished from {data.url} but actual sha1: {f_hash} mismatchs the expected sha1: {data.expected_hash} ")
         
     
     # unzip raw data 
@@ -74,9 +93,13 @@ def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path 
         # Suppression de 'SRID=4326;' dans la colonne "shape" WKT Multipolygone
         _fix_shape_column_for_qgis(unzipped_file_path)
         not_polygon = _count_non_polygon_geom(unzipped_file_path)
-        print(f"{unzipped_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.")
+        print(f"{unzipped_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.\n")
     else:
         print(f"{unzipped_file_path}")
+        
+    print(  f"Downloading is finished. \n"
+            f"zipped file: {zip_file_path} \n"
+            f"unzipped file: {unzipped_file_path}")
     return data
 
 def download_all_depts():
@@ -153,18 +176,16 @@ if __name__ == "__main__":
     )
     parser.add_argument("--data_type", type=str, required=True, help="Type of data: 'etalab' or 'rnb'") 
     parser.add_argument("--dep", type=str, required=True, help="Department number (XX or DOM-TOM)")
+    parser.add_argument("--date", type=str, required=False, help='Date format must be: YYYY-MM-JJ.\nAvailable month ("MM") must be checked on: https://cadastre.data.gouv.fr/datasets/cadastre-etalab')
     args = parser.parse_args()
-    data_type = args.data_type
-    
     dept_code = normalize_dept_code_number(args.dep)
      
     # Téléchargement depuis Etalab ou RNB ?
-    if(data_type == "etalab"):
-        parser.add_argument("--date", type=str, required=True, help='Date format must be: YYYY-MM-JJ.\nAvailable month ("MM") must be checked on: https://cadastre.data.gouv.fr/datasets/cadastre-etalab')
-        args = parser.parse_args()
-        date = args.date
-        main(dept_code, data_type, date) 
+    if(args.data_type == "etalab"):
+        main(dept_code, args.data_type, args.date) 
     elif(args.data_type == "rnb"):
+        args = parser.parse_args()
+        data_type = args.data_type       
         main(dept_code) 
     else:
         raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
