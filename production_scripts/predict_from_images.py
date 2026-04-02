@@ -3,7 +3,9 @@
 Apply a prediction model to split images of a given department and year.
 
 ex:
-dep=75;year=2011;model=2C_22_34_35_67_73__V14;epoch=5;
+activate_PV_detection;
+export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
+dep=09;year=2026;model=2C_22_34_35_67_73__V14;epoch=5;
 python ~/sgis/production_scripts/predict_from_images.py --dep $dep --year $year --model $model --epoch $epoch --share 0.9999999
 """
 import argparse

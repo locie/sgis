@@ -3,7 +3,8 @@ Join the prediction scores information (CSV, result of CNN model) with the cadas
 
 example:
 
-activate_PV_detection;export QT_QPA_PLATFORM=offscreen;
+activate_PV_detection;
+export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
 dep=75;year=2011;model=2C_22_34_35_67_73__V14;epoch=5;roof_type=true;merge_overlapping=pv;export_shp=true;
 python ~/sgis/production_scripts/postprocess.py --dep $dep --year $year --model $model --epoch $epoch --roof_type ${roof_type} --merge_overlapping ${merge_overlapping} --export_shp ${export_shp}
 """
@@ -156,6 +157,6 @@ if __name__ == "__main__":
     model = args.model
     epoch = args.epoch
     
-    main(dep, year, name, roof_type, protected_buildings, merge_overlapping, export_shp_, model, epoch)
+    main(dep, year, name, roof_type, protected_buildings, merge_overlapping, export_shp_,  epoch, model)
 
     
