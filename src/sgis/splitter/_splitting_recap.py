@@ -110,9 +110,9 @@ class SplittingRecap:
                         )
                         
         end_notes   =   (
-                            f"# Verification:\n"
-                            f"# - nombre théorique : {self.initial_buildings_count} - {self.unwanted_buidings_count} =  {self.initial_buildings_count -  self.unwanted_buidings_count}\n"
-                            f"# - nombre obtenu : {self.jpg_count} - {self.underscore_jpg_count} =  {self.jpg_count - self.underscore_jpg_count}\n"
+                            f"Verification:\n"
+                            f"- nombre théorique : {self.initial_buildings_count} - {self.unwanted_buidings_count} =  {self.initial_buildings_count -  self.unwanted_buidings_count}\n"
+                            f"- nombre obtenu : {self.jpg_count} - {self.underscore_jpg_count} =  {self.jpg_count - self.underscore_jpg_count}\n"
                         )
         with open(self.final_notes_file, "a", encoding="utf-8") as f:
             f.write(count_lines + additional + end_notes)
@@ -123,14 +123,15 @@ class SplittingRecap:
     def _check_counts(self):
         logger = get_logger()
         # Checks images counts:
-        theoric_number  = self.initial_buildings_count -  self.unwanted_buidings_count
-        images_diff =  theoric_number - self.file_count
+        theoretical_number  = self.initial_buildings_count -  self.unwanted_buidings_count
+        obtained_number =  self.jpg_count - self.underscore_jpg_count
+        images_diff = theoretical_number - obtained_number
         if(images_diff == 0):
             logger.info("Number of buildings obtained after splitting is OK")
-        elif(images_diff == self.small_jpg_count):
-            logger.info("Number of buildings obtained after splitting is OK after removing smallest images")
         else:
-            logger.warning("Number of buildings obtained after splitting is incoherent")
+            if (self.small_jpg_count != 0):
+                logger.warning("Some images with near-zero disk usage exist")
+            raise AssertionError("Number of buildings obtained after splitting is incoherent")
             
     def _run(self, cmd):
             return int(subprocess.check_output(cmd, shell=True, text=True).strip())

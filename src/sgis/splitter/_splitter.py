@@ -237,7 +237,7 @@ class Splitter():
             ######################################## fix_A ########################################
             
             # génére le fichier récapitulatif notes.txt
-            SplittingRecap(self._output_path).summarize
+            SplittingRecap(self._output_path.parent).summarize()
             
 
     def _find_split_intersect(self, qgis : VectorTools, raster, shapefile, overwrite_with_suffix):
