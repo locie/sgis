@@ -32,7 +32,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   raise e 
             
             # paramètres d'entrée communs à Etalab et RNB
-            self.year = str(date.year)
+            self.year = "2025" #str(date.year)
             self.dept_code = dept_code
             self.cadastre_dir = cadastre_dir
             self.resolution = resolution 
