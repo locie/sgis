@@ -22,7 +22,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
       year : str
       log_file_path : str
       
-      def __init__(self, dept_code, cadastre_dir, resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
+      def __init__(self, dept_code, cadastre_dir : str, BDortho_raster_year : str,resolution = RESOLUTION, raw_folder_path = None, dest_folder_path = None):
            
             # vérifie formatage cadastre_dir YYYY-MM-DD
             try:
@@ -32,7 +32,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
                   raise e 
             
             # paramètres d'entrée communs à Etalab et RNB
-            self.year = "2025" #str(date.year)
+            self.year = BDortho_raster_year
             self.dept_code = dept_code
             self.cadastre_dir = cadastre_dir
             self.resolution = resolution 

@@ -28,16 +28,16 @@ import argparse
 from production_scripts._preprocess_etalab import PreprocessEtalab
 from production_scripts._preprocess_rnb import PreprocessRNB
 
-def main(data_type : str, dep : str, cadastre_dir : str, resolution = 20, raw_folder_path = None, dest_folder_path = None):
+def main(data_type : str, dep : str, cadastre_dir : str, BDortho_raster_year : str, resolution = 20, raw_folder_path = None, dest_folder_path = None):
      
       match (data_type):
             case ("etalab"):
                   # ETALAB
-                  etalab_preprocess_instance = PreprocessEtalab(dep, cadastre_dir, resolution, raw_folder_path, dest_folder_path)
+                  etalab_preprocess_instance = PreprocessEtalab(dep, cadastre_dir, BDortho_raster_year, resolution, raw_folder_path, dest_folder_path)
                   etalab_preprocess_instance.run()   
             case ("rnb"):
                   # RNB
-                  rnb_preprocess_instance = PreprocessRNB(dep, cadastre_dir, resolution, raw_folder_path, dest_folder_path)
+                  rnb_preprocess_instance = PreprocessRNB(dep, cadastre_dir, BDortho_raster_year, resolution, raw_folder_path, dest_folder_path)
                   rnb_preprocess_instance.run()   
             case _:
                   raise ValueError(f"Invalid data type: {args.data_type}. Expected 'etalab' or 'rnb'.")
@@ -48,7 +48,7 @@ if __name__ == "__main__":
       parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
       parser.add_argument("--data_type", type=str, required=True, help="Type of data: 'etalab' or 'rnb'")
       parser.add_argument("--dep", type=str, required=True, help="Department code: 2 digits from 01 to 99 else 3 digits")
-      # parser.add_argument("--year", type=str, required=True, help='BDOrtho version [YYYY]')
+      parser.add_argument("--year", type=str, required=True, help='BDOrtho version [YYYY]')
       parser.add_argument("--cadastre_dir", required=True, 
                               help="The name of the corresponding data diretory on ~/LaCie_thebaulm. [YYYY-MM-DD]" 
                               "A similar name is exported in file `version_cadastre`.")
@@ -56,6 +56,6 @@ if __name__ == "__main__":
       args = parser.parse_args()
      
       # launch main function with parsed arguments
-      main(args.data_type, args.dep, args.cadastre_dir, args.resolution)
+      main(args.data_type, args.dep, args.cadastre_dir, args.year, args.resolution)
 
       

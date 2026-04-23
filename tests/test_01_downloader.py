@@ -35,12 +35,15 @@ class Test_Downloading(unittest.TestCase):
     def test_unzip(self):
         dwd.unzip(ts.TEST_RNB_09_ZIP_TARGET_PATH, ts.UNITTESTS_FOLDER_PATH)
         self.assertTrue(Path(self.expected_file_path).exists())    
-        
+            
     def test_download_rnb_cadastre_09(self):
         dwd.main("09", raw_folder_path = ts.UNITTESTS_FOLDER_PATH)
         
     def test_download_etalab_cadastre_09(self):
-        dwd.main("09",  data_type="etalab", date="2025-12-01", raw_folder_path=ts.UNITTESTS_FOLDER_PATH)
+        dwd.main("09",  data_type="etalab", date="2023-04-01", raw_folder_path=ts.UNITTESTS_FOLDER_PATH)
+        
+    def test_download_rnb_cadastre_CORSE(self):
+        dwd.main("2A", raw_folder_path = ts.UNITTESTS_FOLDER_PATH)
         
     @unittest.skip("Temporairement désactivé car test long")
     def test_download_cadastre_01_to_08(self):

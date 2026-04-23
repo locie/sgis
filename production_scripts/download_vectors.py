@@ -15,7 +15,7 @@ dep=09;data_type=etalab;date=2025-12-01
 python ~/sgis/production_scripts/download_vectors.py --dep $dep --data_type ${data_type} --date $date
 
 Date format must be: YYYY-MM-JJ
-Available month ("MM") must be checked on: https://cadastre.data.gouv.fr/datasets/cadastre-etalab
+Available month ("MM") must be checked on:  https://files.data.gouv.fr/cadastre/etalab-cadastre
 """
 import argparse
 import sys
@@ -27,10 +27,8 @@ import pandas as pd
 from production_scripts.cadastre_data import RNB, Etalab
 from production_scripts.rnb_geo_api import normalize_dept_code_number
 from production_scripts.rnb_geo_api import request_all_rnb_csv_metadata
+from production_scripts._production_constants import *
 
-RAW_DATA_BASE_FOLDER="LaCie_thebaulm"
-RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
-CHUNCK_SIZE=8192
 
 '''
 Exemple:
@@ -55,7 +53,7 @@ def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path 
     #  construit les chemins d'entree/sortie
     if(raw_folder_path == None):
         home_path = Path.home()
-        raw_folder_path = home_path / RAW_DATA_BASE_FOLDER
+        raw_folder_path = home_path / RAW_FOLDERNAME
         if not raw_folder_path.exists():
             die(f"{raw_folder_path} not found")
     else:

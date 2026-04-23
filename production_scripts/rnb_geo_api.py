@@ -12,7 +12,7 @@ MIN_ALLOWED_DATE = datetime(2024, 4, 1, tzinfo=timezone.utc)
 LIMIT = 100
 
 class MetadataTuple(NamedTuple):
-    dept_code: int
+    dept_code: str
     date: str # Date format must be: YYYY-MM-JJ
     url: str
     sha1: str
@@ -251,14 +251,11 @@ def get_dept_code_from_url(url) -> int | None:
         match = re.search(r"RNB_([0-9A-Z]+)\.csv\.zip$", url)
         if match:
             dept_str = match.group(1)
-            if dept_str.isdigit():
-                return int(dept_str)
-            else:
-                return None
+            return dept_str
     except ValueError:
         return None
     
-def find_dept_metadata(items: list[MetadataTuple], a_dept_code: int) -> MetadataTuple | None:  
+def find_dept_metadata(items: list[MetadataTuple], a_dept_code: str) -> MetadataTuple | None:  
     return next((p for p in items if p.dept_code == a_dept_code), None)
 
 def normalize_dept_code_number(a_dept_code : str) -> str:

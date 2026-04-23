@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
+from production_scripts._production_constants import *
 
-BASE_ETALAB_URL="https://cadastre.data.gouv.fr/data/etalab-cadastre" # ETALAB
-BASE_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files" # R.N.B. : Référentiel National des Bâtiments
 
 
 @dataclass
@@ -58,7 +57,7 @@ class RNB(CadastreData):
         url = rf"{BASE_RNB_URL}/{zip_filename}"
 
         all_dept_metadata = request_all_rnb_csv_metadata()
-        dep_metadata = find_dept_metadata(all_dept_metadata, int(dept_code))        
+        dep_metadata = find_dept_metadata(all_dept_metadata, dept_code)        
         return cls(
             dept_code=dept_code,
             date=dep_metadata.date,

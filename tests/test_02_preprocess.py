@@ -26,17 +26,43 @@ class Test_Preprocessing(unittest.TestCase):
             t_dep='09'
             t_date='2025-12-01'
             t_cadastre_dir = t_date
+            t_BDortho_raster_year = '2025'
             # download
             dwd.main(t_dep,  data_type="etalab", date=t_date, raw_folder_path = ts.UNITTESTS_FOLDER_PATH)
             # preprocess Etalab
-            preprocess.main('etalab', dep = t_dep, cadastre_dir = t_cadastre_dir, raw_folder_path = ts.UNITTESTS_FOLDER_PATH,  dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
+            preprocess.main('etalab', 
+                            dep = t_dep, 
+                            cadastre_dir = t_cadastre_dir, 
+                            BDortho_raster_year = t_BDortho_raster_year, 
+                            raw_folder_path = ts.UNITTESTS_FOLDER_PATH,  
+                            dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
       
       def test_preprocess_rnb_cadastre_09(self):
             metadata = dwd.main("09", raw_folder_path =ts.UNITTESTS_FOLDER_PATH)
             t_date = datetime.strptime(metadata.date, '%Y-%m-%d')
             t_year = datetime.strftime(t_date, "%Y")
             t_cadastre_dir = metadata.date
-            preprocess.main('rnb', metadata.dept_code, cadastre_dir = t_cadastre_dir, raw_folder_path = ts.UNITTESTS_FOLDER_PATH,  dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
+            t_BDortho_raster_year = '2025'
+            preprocess.main('rnb', 
+                            dep = metadata.dept_code, 
+                            cadastre_dir = t_cadastre_dir, 
+                            BDortho_raster_year = t_BDortho_raster_year, 
+                            raw_folder_path = ts.UNITTESTS_FOLDER_PATH,  
+                            dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
+      
+      def test_preprocess_rnb_cadastre_CORSE(self):
+            dept_code = "2A"
+            metadata = dwd.main(dept_code, raw_folder_path =ts.UNITTESTS_FOLDER_PATH)
+            t_date = datetime.strptime(metadata.date, '%Y-%m-%d')
+            t_year = datetime.strftime(t_date, "%Y")
+            t_cadastre_dir = metadata.date
+            t_BDortho_raster_year = '2025'
+            preprocess.main('rnb', 
+                            dep = metadata.dept_code, 
+                            cadastre_dir = t_cadastre_dir, 
+                            BDortho_raster_year = t_BDortho_raster_year, 
+                            raw_folder_path = ts.UNITTESTS_FOLDER_PATH,  
+                            dest_folder_path = ts.UNITTESTS_FOLDER_PATH)
       
       
       # @unittest.skip("Temporairement désactivé")      

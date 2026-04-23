@@ -1,5 +1,10 @@
 RAW_FOLDERNAME="LaCie_thebaulm"
 
+# Downloading
+CHUNCK_SIZE=8192
+BASE_ETALAB_URL=" https://files.data.gouv.fr/cadastre/etalab-cadastre" # ETALAB
+BASE_RNB_URL="https://rnb-opendata.s3.fr-par.scw.cloud/files" # R.N.B. : Référentiel National des Bâtiments
+
 # Preprocessing
 RELATIVE_VECTORS_CADASTRE_FOLDER_PATH=rf"gis/vectors/cadastre"
 RELATIVE_TEMP_TILES_FOLDER_PATH=rf"temporary_LaCie/rasters/only_tiles"  
