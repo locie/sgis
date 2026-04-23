@@ -63,7 +63,7 @@ class VectorsPreprocess(ABC): # Classe abstraite
             self.output_vector_layer_dir_path =  self.output_dir_path / "preprocessing" / "vectors"  
             
             # chemin du dossier temporaire pour les rasters de tuiles (créées par preprocess.py, supprimées à la fin du script de détection)
-            self.raster_layers_dir_path = dest_folder_path / RELATIVE_TEMP_TILES_FOLDER_PATH / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
+            # self.raster_layers_dir_path = dest_folder_path / RELATIVE_TEMP_TILES_FOLDER_PATH / self.dept_code / self.year / rf"{self.dept_code}-{self.year}-0M{self.resolution}-RGB"
             self.create_output_dirs()
             
             # Tout (affichages + erreurs) est consigné dans le fichier preprocessing.log
