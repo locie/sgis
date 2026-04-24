@@ -294,6 +294,9 @@ class Splitter():
             input_raster=raster_layer,
             overwrite_with_suffix=overwrite_with_suffix
         )
+        
+        qgis.removeMapLayer(vector_layer_OMBB.id() )
+        qgis.removeMapLayer(raster_layer.id() )
 
     def _define_images_names(self, input_vector, input_raster, overwrite_with_suffix):
         '''
