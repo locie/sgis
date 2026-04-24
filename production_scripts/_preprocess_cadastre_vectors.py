@@ -80,12 +80,6 @@ class VectorsPreprocess(ABC): # Classe abstraite
             raise FileNotFoundError(f'Cadastre data not found in {self.vectors_layer_raw_path.parent}')
       
       def create_output_dirs(self):
-            
-            rasters_path = Path(self.raster_layers_dir_path)
-            
-            if(not rasters_path.exists()):
-                  rasters_path.mkdir(parents=True)
-                  
             # results folders already exist -> preprocessing is aborted
             try:
                   Path(self.output_rasters_dir_path).mkdir(parents=True)
