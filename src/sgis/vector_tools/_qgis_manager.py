@@ -4,6 +4,7 @@ from qgis.core import (
             QgsApplication,
             QgsProcessingContext,
             QgsProcessingFeedback,
+            QgsProject
         )
 from processing.core.Processing import Processing #bootstrap manager for QGIS Processing.
 
@@ -27,10 +28,11 @@ class QgisManager():
 
         self.qgs = QgsApplication([], False)
         self.qgs.initQgis()
-
+        
         Processing.initialize()     
         self.context = QgsProcessingContext()
         self.feedback = QgsProcessingFeedback()
+        self.qjsproject = QgsProject.instance()
             
         return self
     

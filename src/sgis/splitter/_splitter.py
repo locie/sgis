@@ -8,7 +8,8 @@ from sys import gettrace as sys_gettrace
 from PyQt5.QtCore import QVariant
 from pandas import DataFrame
 from processing.core.Processing import processing #bootstrap manager for QGIS Processing.
-from qgis.core import QgsFeature, QgsField, QgsRasterLayer, QgsVectorLayer
+import qgis
+from qgis.core import QgsFeature, QgsField, QgsProject, QgsRasterLayer, QgsVectorLayer
 from tqdm import tqdm
 from sgis._utils import get_logger, prepare_paths
 from sgis.splitter._splitting_recap import SplittingRecap
@@ -295,8 +296,10 @@ class Splitter():
             overwrite_with_suffix=overwrite_with_suffix
         )
         
-        qgis.removeMapLayer(vector_layer_OMBB.id() )
-        qgis.removeMapLayer(raster_layer.id() )
+        # QgsProject.instance().removeMapLayer(layer_id)
+        
+        qgis.qjsproject.instance().removeMapLayer(vector_layer_OMBB.id())
+        qgis.qjsproject.instance().removeMapLayer(raster_layer.id())
 
     def _define_images_names(self, input_vector, input_raster, overwrite_with_suffix):
         '''
