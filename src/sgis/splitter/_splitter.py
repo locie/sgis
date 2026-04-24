@@ -178,8 +178,7 @@ class Splitter():
         '''
         logger = get_logger()
         with VectorTools() as qgis_inst:
-            if(True):
-            # if(sys_gettrace() is not None):
+            if(sys_gettrace() is not None):
                 # en mode debug uniquement -> on active la capture des messages QGIS
                 qgis_inst.catch_qgis_messages_enable()
                   
