@@ -12,15 +12,15 @@ RNB usage :
 
 activate_PV_detection;
 export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
-data_type=rnb;dep=09;resolution=20;cadastre_dir=2026-03-28
-python ~/sgis/production_scripts/preprocess.py --data_type=$data_type --dep $dep --cadastre_dir ${cadastre_dir} --resolution $resolution
+data_type=rnb;dep=09;year=2025;resolution=20;cadastre_dir=2026-03-28
+python ~/sgis/production_scripts/preprocess.py --data_type=$data_type --dep $dep --year=${year} --cadastre_dir ${cadastre_dir} --resolution $resolution
 
 Etalab usage :
 
 activate_PV_detection;
 export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
-data_type=etalab;dep=09;resolution=20;cadastre_dir=2025-12-01
-python ~/sgis/production_scripts/preprocess.py --data_type=$data_type --dep $dep --cadastre_dir ${cadastre_dir} --resolution $resolution
+data_type=etalab;dep=09;year=2025;resolution=20;cadastre_dir=2025-12-01
+python ~/sgis/production_scripts/preprocess.py --data_type=$data_type --dep $dep --year=${year} --cadastre_dir ${cadastre_dir} --resolution $resolution
 
 """
 
