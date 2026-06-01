@@ -113,7 +113,10 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
                 assert merge_overlapping.lower() == 'all'
                 min_field_value = None
             suffix += f"_merge{merge_overlapping.lower().capitalize()}"
-            qgis_inst.merge_overlapped_buildings(layer, min_field_value=min_field_value)
+            merged_groups = qgis_inst.merge_overlapped_buildings(layer, min_field_value=min_field_value)
+            
+            # export the list of merged groups of building IDs in a CSV file
+            qgis_inst.write_merged_groups(merged_groups, path_output / f'{suffix}_merged_groups.csv')
 
         if export_shp_:
             qgis_inst.export_shp(layer, path_output, suffix)    

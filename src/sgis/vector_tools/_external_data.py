@@ -226,9 +226,8 @@ class QgisExternalData:
         if and only if both A and B has a value greater or equal than `min_field_value` for their `reference_field_name` field.
         """
         logger = get_logger()
-
-
-
+        merged_groups = []
+        
         logger.info(f"Computing intersections for pairs of buildings")
         if min_field_value is not None:
             logger.info(f"Only features with {reference_field_name} >= {min_field_value} will be considered for merging.")
@@ -323,6 +322,8 @@ class QgisExternalData:
         to_update_geom = {}
         features = layer.getFeatures()
         features_dict = {f["ID"]: f for f in features}
+        
+        
         for IDs in to_edit_features:
             cpt += 1
             score = -1
@@ -347,6 +348,12 @@ class QgisExternalData:
             assert leading_feature is not None
             to_update_geom[leading_feature] = geom
             to_delete_features += other_features
+            
+            # update a dictionary of all merged IDs
+            merged_groups.append({
+                "leading_id": leading_feature["ID"],
+                "merged_ids": IDs
+            })
 
         if cpt_no_score > 100:
             logger.warning(f"More than 100 features had no value for field '{reference_field_name}'.")
@@ -359,7 +366,16 @@ class QgisExternalData:
             layer.deleteFeatures([feature.id() for feature in to_delete_features])
             for leading_feature, geom in to_update_geom.items():
                 _ = layer.changeGeometry(leading_feature.id(), geom)
-
+                        
+        return merged_groups
+          
+    def write_merged_groups(self, merged_groups, output_file_path):
+        """
+        Write the list of merged groups of building IDs in a CSV file. Each line corresponds to a group of merged buildings
+        """
+        with open(output_file_path, "w") as f:
+            for group in merged_groups:
+                f.write(",".join(map(str, group["merged_ids"])) + "\n")
 
     def update_on_ID(self, layer : QgsVectorLayer, dataframe : DataFrame):
         """Add the data of a DataFrame to the attribute table of a vector layer.
