@@ -507,7 +507,7 @@ class CNNModel():
         df['Predicted class'] = df['Predicted class'].replace(self._class_names_idx)
         df['File paths'] = self._prediction_set.file_paths
         df['Building name'] = df['File paths'].apply(lambda p: Path(p).stem)
-        df = df[~df['Building name'].str.contains('\d_\d{1,2}', regex=True)]
+        df = df[~df['Building name'].str.contains('_\d{1,2,3}', regex=True)] # un bâtiment est partagé au plus par 4 tuiles rasters + lettre possible avant "_" 
         df = df[~df['Building name'].str.contains('.', regex=False)]
         if copy_images:
             logger.info('Saving images')

@@ -11,7 +11,6 @@ from .._utils import get_logger, prepare_paths
 
 class QgisExternalData:
     
-    id_field = "ID"  # or rnb_id
     def add_protected_buildings(self, layer : QgsVectorLayer, layer_protected_buildings : QgsVectorLayer):
         """Quite specific to the French case. Add a boolean attribute, for every building of a vector layer, that states whether 
         this building is included in an architectural protected area.
@@ -234,7 +233,15 @@ class QgisExternalData:
             logger.info(f"Only features with {reference_field_name} >= {min_field_value} will be considered for merging.")
             layer.setSubsetString(f'"{reference_field_name}" >= {min_field_value}')
 
-            
+                
+        fields = layer.fields().names()
+        cond = [f in fields for f in ("ID", "rnb_id")]
+        assert any(cond) and (not all(cond)) , \
+            "Layer must contain either 'ID' or 'rnb_id' field"
+
+        # pick the one that exists
+        self.id_field = "ID" if "ID" in fields else "rnb_id"
+        
         result = processing.run("native:multiintersection",
                                 {'INPUT': layer,
                                     'OVERLAYS': [layer],
@@ -245,7 +252,8 @@ class QgisExternalData:
             layer.setSubsetString('')
 
         intersect = result["OUTPUT"]
-        intersect.setSubsetString('"ID" != "ID_2"')
+        subsetString = self.id_field + " != " + f"{self.id_field}_2"
+        intersect.setSubsetString(subsetString)
 
         logger.info(f"Creating groups of overlapping buildings")
 
@@ -253,8 +261,8 @@ class QgisExternalData:
         features = list(intersect.getFeatures())
         features_inter = set()
         for feature in features:
-            ID = feature["ID"]
-            ID_2 = feature["ID_2"]
+            ID = feature[self.id_field]
+            ID_2 = feature[f"{self.id_field}_2"]
             new_couple = (ID, ID_2) if ID < ID_2 else (ID_2, ID)
             features_inter.add(new_couple)
 
@@ -322,7 +330,7 @@ class QgisExternalData:
         to_delete_features = []
         to_update_geom = {}
         features = layer.getFeatures()
-        features_dict = {f["ID"]: f for f in features}
+        features_dict = {f[self.id_field]: f for f in features}
         for IDs in to_edit_features:
             cpt += 1
             score = -1

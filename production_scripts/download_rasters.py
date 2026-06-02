@@ -1,3 +1,10 @@
+"""
+activate_PV_detection;
+export PYTHONPATH=~/sgis;
+dep=09;year=2022
+python ~/sgis/production_scripts/download_rasters.py --dep $dep --year $year --resolution=20
+"""
+
 import argparse
 import requests
 import hashlib

@@ -5,7 +5,7 @@ example:
 
 activate_PV_detection;
 export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
-dep=75;year=2011;model=2C_22_34_35_67_73__V14;epoch=5;roof_type=true;merge_overlapping=pv;export_shp=true;
+dep=75;year=2011;model=2C_22_34_35_67_73__V14;epoch=5;roof_type=false;merge_overlapping=pv;export_shp=true;
 python ~/sgis/production_scripts/postprocess.py --dep $dep --year $year --model $model --epoch $epoch --roof_type ${roof_type} --merge_overlapping ${merge_overlapping} --export_shp ${export_shp}
 """
 
@@ -20,16 +20,15 @@ import pandas as pd
 from pathlib import Path
 from sgis.vector_tools import *
 from os import environ
-from production_scripts._production_constants import DEFAULT_CLASSIFIER_MODEL, RAW_FOLDERNAME
+from production_scripts._production_constants import DEFAULT_CLASSIFIER_MODEL
 
 def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, export_shp_, epoch, model = DEFAULT_CLASSIFIER_MODEL, base_folder_path = None):
     epoch = f"{epoch:0>3d}"
     assert ((len(dep)==2) or (len(dep)==3 and dep[0]=='9'))
 
     #  construit les chemins d'entree/sortie
-    if(base_folder_path == None):
-        home_path = Path(environ['HOME'])
-        base_folder_path = home_path / RAW_FOLDERNAME
+    if(base_folder_path is None):
+        base_folder_path = Path(environ['HOME'])
     else:
         base_folder_path = Path(base_folder_path)
         
@@ -50,27 +49,32 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
     index_ex = scores.index[0]
     print(f"Typical index is: {index_ex}")
     
+
+    if any([e[0] in range(0, 10) for e in scores.index]):
+        raise NotImplementedError("Cas 'ID' détecté. " \
+                                  "Pas de disjonction de cas ID / rnb_id, " \
+                                  "nécessaire pour ajouter un '0' en préfixe dans le cas ID.")
     
  
-    try:
-        float(index_ex)          # note: possible car les résultats de prédiction pour les bâtiments  type XXX123_1.jpg ne sont pas conservés
-    except:                             # cas rnb_id ou cas particulier etalab où l'index est interprété comme str (ex Corse (2A, 2B)): 
-        p = ''                             # la lecture du CSV a conservé les 0 ('02A', '02B')    
-    else:                               # l'index a été interprété comme un entier, 
-                                        # donc les 0 sont perdus     
-        if len(dep) == 2:
-            if dep[0] == '0':   # ex: dep=2
-                p = '00'     
-            else:               # ex: dep=45
-                p = '0'
-        else:                   # ex: dep = 972
-            p = ''
+    # try:
+    #     float(index_ex)          # note: possible car les résultats de prédiction pour les bâtiments  type XXX123_1.jpg ne sont pas conservés
+    # except:                             # cas rnb_id ou cas particulier etalab où l'index est interprété comme str (ex Corse (2A, 2B)): 
+    #     p = ''                             # la lecture du CSV a conservé les 0 ('02A', '02B')    
+    # else:                               # l'index a été interprété comme un entier, 
+    #                                     # donc les 0 sont perdus     
+    #     if len(dep) == 2:
+    #         if dep[0] == '0':   # ex: dep=2
+    #             p = '00'     
+    #         else:               # ex: dep=45
+    #             p = '0'
+    #     else:                   # ex: dep = 972
+    #         p = ''
                 
-    scores.index = p + scores.index 
-    index_ex = scores.index[0]
-    print(f"    Added prefix for prediction score: '{p}'")
-    print(f"    Typical index will now be: {index_ex}")
-    print(f"    Proceeding in 10 seconds") 
+    # scores.index = p + scores.index 
+    # index_ex = scores.index[0]
+    # print(f"    Added prefix for prediction score: '{p}'")
+    # print(f"    Typical index will now be: {index_ex}")
+    # print(f"    Proceeding in 10 seconds") 
 
     # Ajout scores au cadastre
     with VectorTools() as qgis_inst:
@@ -89,6 +93,7 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
 
         # Toiture
         if roof_type:
+            raise NotImplementedError("")
             dep_ = dep.lstrip('0') # remove leading 0 if dep is 1-digit (1->9)
             path_roof_types = base_folder_path / rf"LaCie_thebaulm/gis/other/roof_types/batiment_groupe_ffo_bat_{dep_}.csv"
             roof_per_building = qgis_inst.add_roof_type(layer, path_roof_types)
@@ -100,7 +105,7 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
 
         # Batiments protégés
         if protected_buildings:    
-            path_protected_buildings = base_folder_path / "LaCie_thebaulm/gis/vectors/protected_buildings/ProtectionautitredesabordsdemonumentshistoriquesAC1{name}{dep}/Documents/supmh{dep}_exporttigrepolygone.shp"
+            path_protected_buildings = base_folder_path / f"LaCie_thebaulm/gis/vectors/protected_buildings/ProtectionautitredesabordsdemonumentshistoriquesAC1{name}{dep}/Documents/supmh{dep}_exporttigrepolygone.shp"
             layer_protected_buildings = qgis_inst.load_layer(path_protected_buildings, 'protected_buildings')
             layer = qgis_inst.add_protected_buildings(layer, layer_protected_buildings)
             suffix += "_protected"

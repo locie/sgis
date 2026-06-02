@@ -26,15 +26,12 @@ from sgis.splitter import Splitter
 from os import environ
 from pathlib import Path
 
-def main(dep : str, year : str, resolution : int, threads_num = int, raw_folder_path = None, dest_folder_path = None):
+def main(dep : str, year : str, resolution : int, threads_num = int, dest_folder_path = None):
     
     #  construit les chemins d'entree/sortie
-    if(raw_folder_path == None):
-        home_path = Path(environ['HOME'])
-        raw_folder_path = home_path / RAW_FOLDERNAME
-        dest_folder_path = home_path
+    if(dest_folder_path is None):
+        dest_folder_path = Path(environ['HOME'])
     else:
-        raw_folder_path = Path(raw_folder_path)
         dest_folder_path =  Path(dest_folder_path)
         
     name_preprocessed = PREPROCESSED_BUILDINGS_LAYER_FILENAME
