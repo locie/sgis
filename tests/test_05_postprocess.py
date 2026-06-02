@@ -4,14 +4,16 @@ import test_setup as ts
 import unittest # The test framework
 
 
-class Test_postprocess(unittest.TestCase):       
+class Test_postprocess(unittest.TestCase):  
+    # mkdir -p /tmp/sgis/unittests/split/82/  
+    # xargs -I {} cp -rs ~/split/82/{} /tmp/sgis/unittests/split/
     def test_postprocess(self):
-        dep="09"
-        year="2026"
+        dep="82"
+        year="2025"
         epoch=5
-        roof_type="true"
+        roof_type=None
         merge_overlapping="pv"
-        export_shp="true"
+        export_shp="false"
         protected_buildings = None #TODO test example
         name = None #TODO test example
        
