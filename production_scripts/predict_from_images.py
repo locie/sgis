@@ -5,10 +5,11 @@ Apply a prediction model to split images of a given department and year.
 ex:
 activate_PV_detection;
 export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
-dep=09;year=2026;model=2C_22_34_35_67_73__V14;epoch=5;
+dep=82;year=2025;model=2C_22_34_35_67_73__V14;epoch=5;
 python ~/sgis/production_scripts/predict_from_images.py --dep $dep --year $year --model $model --epoch $epoch --share 0.9999999
 """
 import argparse
+from pathlib import Path
 from os import environ
 from production_scripts._production_constants import DEFAULT_CLASSIFIER_GPU, DEFAULT_CLASSIFIER_MODEL, DEFAULT_CLASSIFIER_SHARE_VALUE
 from sgis.classifier import *
@@ -22,12 +23,12 @@ def main(dep, year, epoch, model = DEFAULT_CLASSIFIER_MODEL, share = DEFAULT_CLA
         environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     print(f'Prediction on department {dep} (year {year}) with share {share}')
-    home = '/tmp/sgis/unittests'
-    my_model = load_model(rf'{home}/classification/models/{model}/saved_models/{model}.metadata', 
-                        rf'{home}/classification/models/{model}/saved_models/{model}_{epoch}.keras')
+    home = Path.home()
+    my_model = load_model(home / rf'classification/models/{model}/saved_models/{model}.metadata', 
+                          home / rf'classification/models/{model}/saved_models/{model}_{epoch}.keras')
 
-    input_path =  home + f'/split/{dep}/{year}/rasters/'
-    output_path = home + f'/predictions/{dep}/{year}/{model}_{epoch}/raw_predictions/'
+    input_path =  home / f'split/{dep}/{year}/rasters/'
+    output_path = home / f'predictions/{dep}/{year}/{model}_{epoch}/raw_predictions/'
 
     predictions = my_model.predict(input_path, output_path, share=share, copy_images=False, save_scores=True)
     return predictions
