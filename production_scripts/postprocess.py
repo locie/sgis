@@ -50,31 +50,31 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
     print(f"Typical index is: {index_ex}")
     
 
-    if any([e[0] in range(0, 10) for e in scores.index]):
-        raise NotImplementedError("Cas 'ID' détecté. " \
-                                  "Pas de disjonction de cas ID / rnb_id, " \
-                                  "nécessaire pour ajouter un '0' en préfixe dans le cas ID.")
+    # if any([e[0] in range(0, 10) for e in scores.index]):
+    #     raise NotImplementedError("Cas 'ID' détecté. " \
+    #                               "Pas de disjonction de cas ID / rnb_id, " \
+    #                               "nécessaire pour ajouter un '0' en préfixe dans le cas ID.")
     
  
-    # try:
-    #     float(index_ex)          # note: possible car les résultats de prédiction pour les bâtiments  type XXX123_1.jpg ne sont pas conservés
-    # except:                             # cas rnb_id ou cas particulier etalab où l'index est interprété comme str (ex Corse (2A, 2B)): 
-    #     p = ''                             # la lecture du CSV a conservé les 0 ('02A', '02B')    
-    # else:                               # l'index a été interprété comme un entier, 
-    #                                     # donc les 0 sont perdus     
-    #     if len(dep) == 2:
-    #         if dep[0] == '0':   # ex: dep=2
-    #             p = '00'     
-    #         else:               # ex: dep=45
-    #             p = '0'
-    #     else:                   # ex: dep = 972
-    #         p = ''
-                
-    # scores.index = p + scores.index 
-    # index_ex = scores.index[0]
-    # print(f"    Added prefix for prediction score: '{p}'")
-    # print(f"    Typical index will now be: {index_ex}")
-    # print(f"    Proceeding in 10 seconds") 
+    try:
+        float(index_ex)          # note: possible car les résultats de prédiction pour les bâtiments  type XXX123_1.jpg ne sont pas conservés
+    except:                             # cas rnb_id ou cas particulier etalab où l'index est interprété comme str (ex Corse (2A, 2B)): 
+        p = ''                             # la lecture du CSV a conservé les 0 ('02A', '02B')    
+    else:                               # l'index a été interprété comme un entier, 
+                                        # donc les 0 sont perdus     
+        if len(dep) == 2:
+            if dep[0] == '0':   # ex: dep=2
+                p = '00'     
+            else:               # ex: dep=45
+                p = '0'
+        else:                   # ex: dep = 972
+            p = ''          
+    scores.index = p + scores.index 
+    index_ex = scores.index[0]
+    print(scores)
+    print(f"    Added prefix for prediction score: '{p}'")
+    print(f"    Typical index will now be: {index_ex}")
+    print(f"    Proceeding in 10 seconds") 
 
     # Ajout scores au cadastre
     with VectorTools() as qgis_inst:
@@ -88,7 +88,7 @@ def main(dep, year, name, roof_type, protected_buildings, merge_overlapping, exp
         attributes = layer.getFeature(one_central_feature_index).attributeMap()
         print("Sample of attributes of preprocessing layer with prediction scores:")
         print(attributes)
-        if not (attributes['Score']>=0):
+        if not (attributes['Score']>=0.0):
             raise ValueError("Merging process went probably wrong since there are some missing prediction values. Check the compatibility of the preprocessed layer and prediction CSV.")
 
         # Toiture

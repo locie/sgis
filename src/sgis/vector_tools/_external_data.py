@@ -357,7 +357,7 @@ class QgisExternalData:
             
             # update a dictionary of all merged IDs
             merged_groups.append({
-                "leading_id": leading_feature["ID"],
+                "leading_id": leading_feature[self.id_field],
                 "merged_ids": IDs
             })
 
@@ -432,7 +432,8 @@ class QgisExternalData:
             mapper_id[feature[self.id_field]] = feature.id()
         dataframe.index = dataframe.index.map(mapper_id)
         dataframe = dataframe[~dataframe.index.isna()]          # ignore features that do not correspond to a feature ID
-
+        dataframe.index = dataframe.index.astype('int64')
+         
         # add a new attribute for each column of the DataFrame
         logger.info('Adding new attributes to layer')
         attributes = []

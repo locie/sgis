@@ -16,6 +16,7 @@ from sgis.splitter._splitting_recap import SplittingRecap
 from sgis.vector_tools import VectorTools
 import subprocess
 from shutil import copyfile
+from pathlib import Path
 
 ID_ETALAB_FIELD_NAME = "ID"
 ID_RNB_FIELD_NAME = "rnb_id"
@@ -401,6 +402,11 @@ class Splitter():
             'OUTPUT': 'TEMPORARY_OUTPUT'
         })['OUTPUT']
         
+        # if mask.featureCount() == 0:
+        #     raise ValueError("The mask expression selected no features.")
+        if path.exists():
+            path.unlink()
+
         params = {
             'INPUT': raster_layer,
             'OUTPUT': str(path),
