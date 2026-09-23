@@ -89,9 +89,9 @@ def main(dept_code : str, data_type="rnb", date = "yyyy-mm-dd", raw_folder_path 
     if(data_type == "rnb"):
         # NOTE ⚠ IMPORTANT : Nettoie la colonne "shape" avant traitement
         # Suppression de 'SRID=4326;' dans la colonne "shape" WKT Multipolygone
-        _fix_shape_column_for_qgis(unzipped_file_path)
-        not_polygon = _count_non_polygon_geom(unzipped_file_path)
-        print(f"{unzipped_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.\n")
+        cleaned_file_path = _fix_shape_column_for_qgis(unzipped_file_path)
+        not_polygon = _count_non_polygon_geom(cleaned_file_path)
+        print(f"{cleaned_file_path} contains {not_polygon} geometries that neither POLYGON nor MULTIPOLYGON.\n")
     else:
         print(f"{unzipped_file_path}")
         
@@ -148,9 +148,14 @@ def _fix_shape_column_for_qgis(csv_path : Path):
     des chaînes de géométrie WKT (Well-Known Text). Les préfixes SRID peuvent provoquer des problèmes
     lors de l’importation des géométries dans QGIS ; cette étape de prétraitement garantit donc la compatibilité.
     '''
-    df = pd.read_csv(csv_path, sep=';')
+    df = pd.read_csv(csv_path, sep=';', usecols=['rnb_id', 'shape'])
+    outpath = csv_path.with_name(f"{csv_path.stem}_reduced{csv_path.suffix}")
     df['shape'] = df['shape'].str.replace(r'^SRID=4326;', '', regex=True)
-    df.to_csv(csv_path, index=False)
+    df = df[df['shape'].str.startswith(('POLYGON(', 'MULTIPOLYGON('))]
+    df.to_csv(outpath, index=False)
+    return outpath
+
+
 
 
 def _count_non_polygon_geom(csv_path : str) -> int:
@@ -163,9 +168,15 @@ def _count_non_polygon_geom(csv_path : str) -> int:
 
 
 def download_all_available_rnb_csv(list_to_dwld : list):
-    for e in list_to_dwld:
-        main(data_type, dept_code)
-    # system(f"tree {rootp}")
+    """Download the RNB data for each department in ``list_to_dwld``.
+
+    Items may be department codes or metadata objects exposing a
+    ``dept_code`` attribute, which makes this helper usable with the result
+    of :func:`request_all_rnb_csv_metadata` as well as a simple list of codes.
+    """
+    for item in list_to_dwld:
+        dept_code = getattr(item, "dept_code", item)
+        main(normalize_dept_code_number(str(dept_code)), data_type="rnb")
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

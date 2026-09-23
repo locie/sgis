@@ -8,7 +8,7 @@ class PreprocessRNB(VectorsPreprocess):
     Classe de prétraitement des données de cadastre RNB.
     """
     def build_resulting_vectors_file_path(self, unzipped_path : Path) -> Path :
-        return unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}.csv"
+        return unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}_reduced.csv"
     
     def build_version_cadastre(self, date : datetime): 
         return datetime.strftime(date, '%B, %Y, Cadastre R.N.B.')
