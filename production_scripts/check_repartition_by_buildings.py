@@ -1,5 +1,7 @@
 from pathlib import Path
 import pandas as pd
+from datetime import datetime
+import re
 # import geopandas as gpd
 # from shapely import wkt
 
@@ -38,14 +40,14 @@ if not missing.empty:
     missing = missing.copy()
     missing["ID"] = missing["original"].str.replace(r"\.jpg$", "", regex=True, case=False)
 
-    ids = sorted(missing["ID"].unique())
-    print(f"\n{len(ids)} building IDs missing:")
-    for building_id in ids:
-        print(building_id)
+    # ids = sorted(missing["ID"].unique())
+    # print(f"\n{len(ids)} building IDs missing:")
+    # for building_id in ids:
+    #     print(building_id)
 
     # optional: also show which raster (CSV) each ID belongs to
-    print("\nID -> raster:")
-    print(missing[["ID", "saved", "csv"]].sort_values("csv").to_string(index=False))
+    # print("\nID -> raster:")
+    # print(missing[["ID", "saved", "csv"]].sort_values("csv").to_string(index=False))
     
     
     ###############################################################################
@@ -92,17 +94,33 @@ if not missing.empty:
 
     # print(gdf[["rnb_id", "saved", "csv"]].head())
     # print("Invalid geometries:", (~gdf.is_valid).sum(), "| empty:", gdf.is_empty.sum())
+if extra:    
+    extra = sorted(on_disk - set(expected["saved"]))
 
+    df = pd.DataFrame({"image": extra})
+    df["path"] = df["image"].apply(lambda n: IMAGES_DIR / n)
+    df["ID"] = df["image"].str.replace(r"(_\d+)?\.jpg$", "", regex=True, case=False)
+    df["suffix"] = df["image"].str.extract(r"_(\d+)\.jpg$", flags=re.I)[0]
+    df["size_kb"] = df["path"].apply(lambda p: round(p.stat().st_size / 1024, 1))
+    df["mtime"] = df["path"].apply(lambda p: datetime.fromtimestamp(p.stat().st_mtime))
+
+    # is the base ID (without suffix) expected somewhere in the CSVs?
+    expected_ids = set(expected["original"].str.replace(r"\.jpg$", "", regex=True, case=False))
+    df["ID_in_csv"] = df["ID"].isin(expected_ids)
+
+    print(f"Extra images: {len(df)}")
+    print("With suffix (_1, _2...):", df["suffix"].notna().sum())
+    print("Without suffix:         ", df["suffix"].isna().sum())
+    print("Base ID known in CSVs:  ", df["ID_in_csv"].sum(), "| unknown:", (~df["ID_in_csv"]).sum())
+
+    print("\nFirst 50:")
+    print(df[["image", "ID", "suffix", "ID_in_csv", "size_kb", "mtime"]].head(50).to_string(index=False))
+
+    # when were they written? (identifies the run/crash they come from)
+    print("\nExtra images per day:")
+    print(df.groupby(df["mtime"].dt.date).size().to_string())
     
-    
-    
-    
-    
+    Path(IMAGES_DIR,"extra_images.txt").write_text("\n".join(df["image"]) + "\n", encoding="utf-8")  
 else:
     if missing.empty:
      print("No missing images.")
-
-if extra:
-    pd.Series(extra, name="image").to_csv("extra_images.csv", index=False)
-if not dups.empty:
-    dups.to_csv("duplicated_expected_names.csv", index=False)
