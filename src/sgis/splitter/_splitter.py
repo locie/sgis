@@ -230,9 +230,10 @@ class Splitter():
                             logger.debug(f"Adding to progress file: '{raster}'")
 
                 with ThreadPoolExecutor(threads_num) as executor:
-                    for idx, raster in enumerate(input_rasters):
-                        executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
-                        
+                    futures = [executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
+                               for idx, raster in enumerate(input_rasters)]
+                    for f in futures:
+                        f.result()
                 ######################################## fix_A ########################################      
                 self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
                 ######################################## fix_A ########################################
@@ -348,26 +349,61 @@ class Splitter():
         to_write = args.copy()
         count = 0
         raster_name = raster_layer.name()
-        while to_write:
+        MAX_ATTEMPTS = 3
+        MAX_CONSECUTIVE_ERRORS = 5
+        
+        to_write = args.copy()
+        count = 0
+        consecutive_errors = 0
+
+        while to_write and count < MAX_ATTEMPTS:
             if count >= 1:
-                logger.warning(f'{raster_name}: {count} nth attempt to write images:'
-                      f'{len(to_write)} buildings remaining')
+                logger.warning(f'{raster_name}: attempt {count + 1}/{MAX_ATTEMPTS}, '
+                            f'{len(to_write)} buildings remaining')
 
-            # normal disk write
-            for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ', leave=True,
-                                          colour='red', unit='buildings', ncols=150, miniters=10, file=stdout):
-                self._do_split(raster_layer, vector_layer, q, path)
+            for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ',
+                                        leave=True, colour='red', unit='buildings',
+                                        ncols=150, miniters=10, file=stdout):
+                try:
+                    self._do_split(raster_layer, vector_layer, q, path)
+                    consecutive_errors = 0
+                except Exception as e:
+                    consecutive_errors += 1
+                    logger.error(f"{raster_name}: failed on {filename}: {e}")
+                    if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                        raise RuntimeError(
+                            f"{consecutive_errors} consecutive failures on {raster_name}: "
+                            f"probably a systematic problem (temp folder? disk?)") from e
 
-            # files existence check
-            failed_write = []
-            for q, path, filename in to_write:
-                if not path.exists():
-                    logger.debug(f"Error writing file: {filename}")
-                    failed_write.append((q, path, filename))
-
-            # prepare for another loop if needed
-            to_write = failed_write.copy()
+            to_write = [(q, p, f) for q, p, f in to_write if not p.exists()]
             count += 1
+
+        if to_write:
+            logger.error(f"{raster_name}: {len(to_write)} buildings could not be written "
+                        f"after {MAX_ATTEMPTS} attempts (e.g. {to_write[0][2]})")
+            # optionally dump the filenames to a CSV so you can inspect them later
+                
+        
+        # while to_write:
+        #     if count >= 1:
+        #         logger.warning(f'{raster_name}: {count} nth attempt to write images:'
+        #               f'{len(to_write)} buildings remaining')
+
+        #     # normal disk write
+        #     for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ', leave=True,
+        #                                   colour='red', unit='buildings', ncols=150, miniters=10, file=stdout):
+        #         self._do_split(raster_layer, vector_layer, q, path)
+
+        #     # files existence check
+        #     failed_write = []
+        #     for q, path, filename in to_write:
+        #         if not path.exists():
+        #             logger.debug(f"Error writing file: {filename}")
+        #             failed_write.append((q, path, filename))
+
+        #     # prepare for another loop if needed
+        #     to_write = failed_write.copy()
+        #     count += 1
 
         t1 = perf_counter()
 
@@ -392,31 +428,54 @@ class Splitter():
 
 
     def _do_split(self, raster_layer, vector_layer, q, path):
-        '''
-        Call the `gdal:cliprasterbymasklayer` function using Qgis `processing`.
-
-        '''
-        mask = processing.run("native:extractbyexpression", {
+        result = processing.run("native:extractbyexpression", {
             'INPUT': vector_layer,
             'EXPRESSION': q,
-            'OUTPUT': 'TEMPORARY_OUTPUT'
-        })['OUTPUT']
+            'OUTPUT': 'memory:',          # no temp file on disk
+        })
         
-        # if mask.featureCount() == 0:
-        #     raise ValueError("The mask expression selected no features.")
+        mask = result.get('OUTPUT')
+        if mask is None or not mask.isValid() or mask.featureCount() == 0:
+            raise RuntimeError(f"Invalid or empty mask for expression: {q}")
+
         if path.exists():
             path.unlink()
 
-        params = {
-            'INPUT': raster_layer,
-            'OUTPUT': str(path),
+        processing.run('gdal:cliprasterbymasklayer', {
+            'INPUT': raster_layer, 
+            'OUTPUT': str(path), 
             'MASK': mask,
-            'ALPHA_BAND': False,
-            'CROP_TO_CUTLINE': True,
+            'ALPHA_BAND': False, 
+            'CROP_TO_CUTLINE': True, 
             'KEEP_RESOLUTION': True,
-            'OPTIONS': 'COMPRESS=LZW',
-            'DATA_TYPE': 0,
-            'MULTITHREADING': False,  # no effect
-        }
-        processing.run('gdal:cliprasterbymasklayer', params)
+            'OPTIONS': 'COMPRESS=LZW', 
+            'DATA_TYPE': 0, 
+            'MULTITHREADING': False, # no effect
+        })
+        
+        # mask = processing.run("native:extractbyexpression", {
+        #     'INPUT': vector_layer,
+        #     'EXPRESSION': q,
+        #     'OUTPUT': 'TEMPORARY_OUTPUT'
+        # })['OUTPUT']
+        
+        # # if mask.featureCount() == 0:
+        # #     raise ValueError("The mask expression selected no features.")
+        # if path.exists():
+        #     path.unlink()
+
+        # params = {
+        #     'INPUT': raster_layer,
+        #     'OUTPUT': str(path),
+        #     'MASK': mask,
+        #     'ALPHA_BAND': False,
+        #     'CROP_TO_CUTLINE': True,
+        #     'KEEP_RESOLUTION': True,
+        #     'OPTIONS': 'COMPRESS=LZW',
+        #     'DATA_TYPE': 0,
+        #     'MULTITHREADING': False,  # no effect
+        # }
+        # processing.run('gdal:cliprasterbymasklayer', params)
 # end class
+
+

@@ -91,31 +91,15 @@ class SplittingRecap:
         self.file_count = self._run(self.file_count_cmd)
         
     def _write_notes_file(self):
-        
         # recopie contenu du fichier de log de l'étape de preprocessing > notes.txt
         copyfile(self.preprocessing_step_log_file, self.final_notes_file)
         
-        # Edit files "notes"
-        count_lines =   (
-                            f"\n\n{self.jpg_count_cmd}\n{self.jpg_count}\n"
-                            f"{self.underscore_jpg_count_cmd}\n{self.underscore_jpg_count}\n"
-                            f"{self.small_jpg_count_cmd}\n{self.small_jpg_count}\n"
-                            f"{self.progress_file_lines_count_cmd}\n{self.progress_file_lines_count}\n"
-                            f"{self.file_count_cmd}\n{self.file_count}\n\n\n"
-                        )
-                        
-        additional  =   (
-                            f"# ls ~/temporary_LaCie/rasters/only_tiles/[...]/*jp2 | wc -l\n"
-                            f"# find rasters/images -iname \"*.jpg\" -size -100c -delete\n\n\n"
-                        )
-                        
-        end_notes   =   (
-                            f"Verification:\n"
-                            f"- nombre théorique : {self.initial_buildings_count} - {self.unwanted_buidings_count} =  {self.initial_buildings_count -  self.unwanted_buidings_count}\n"
-                            f"- nombre obtenu : {self.jpg_count} - {self.underscore_jpg_count} =  {self.jpg_count - self.underscore_jpg_count}\n"
-                        )
+        # genere le contenu du fichier 
+        notes_content = self._build_notes_content()
+        
+        # sauvegarde "notes.txt"
         with open(self.final_notes_file, "a", encoding="utf-8") as f:
-            f.write(count_lines + additional + end_notes)
+            f.write(notes_content)
             
     def _build_notes_content(self):
         """

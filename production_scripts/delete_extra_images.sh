@@ -9,9 +9,9 @@
 # rm -rf /path/to/output/images_extra_quarantine    # or ./delete_extra_images.sh delete
 set -euo pipefail
 
-IMAGES_DIR="/home/thebaulm/split/31/2025/rasters/images"
-LIST="$(realpath /home/thebaulm/split/31/2025/rasters/images/extra_images.txt)"
-QUARANTINE="/home/thebaulm/images_extra_quarantine/split/31/2025/rasters/images/"
+IMAGES_DIR="/home/nerotb/split/59/2025/rasters/images"
+LIST="$(realpath /home/nerotb/split/59/2025/rasters/images/extra_images.txt)"
+QUARANTINE="/home/nerotb/images_extra_quarantine/split/59/2025/rasters/images/"
 MODE="${1:-dry-run}"
 
 [[ -d "$IMAGES_DIR" ]] || { echo "Images dir not found: $IMAGES_DIR"; exit 1; }
