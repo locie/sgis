@@ -178,8 +178,9 @@ class Splitter():
 
         '''
         logger = get_logger()
+        FORCE_QGIS_MESSAGE_LOGGING = True
         with VectorTools() as qgis_inst:
-            if(sys_gettrace() is not None):
+            if(sys_gettrace() is not None or FORCE_QGIS_MESSAGE_LOGGING):  # en mode debug uniquement -> on active la capture des messages QGIS
                 # en mode debug uniquement -> on active la capture des messages QGIS
                 qgis_inst.catch_qgis_messages_enable()
                   
@@ -197,46 +198,47 @@ class Splitter():
             # hypothèse: le problème est que le nombre de rasters à traiter n'est pas multiple du nombre de threads
             # tentative de solution (fix_A): finir le découpage en mode séquentiel pour les rasters du reste de la division entière
             ######################################## fix_A #####################################################################################################
-            if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
-                if (quotient == 0) and (remainder != 0):
-                    logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
-            
-                logger.info('Sequential mode')
-                for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
-                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-                    self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
-                    with open(progress_file, 'a') as f:
-                        f.write(str(raster) + '\n')
-                        logger.debug(f"Adding to progress file: '{raster}'")
-            else:   
-                input_rasters = input_rasters[:quotient * threads_num]  # fix_A
-                logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
-
-                if not isinstance(threads_num, int):
-                    raise TypeError(f'Invalid type for `threads_num`.')
-                logger.debug(f"Number of threads: {threads_num}")
-                if threads_num > 6:
-                    logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
-
-                lock_file_write = Lock()
-                # [info] la Semaphore doit être appliquée en amont,
-                # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
-                def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
-                    logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
-                    self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
-                    with lock_file_write:
+            if(quotient != 0) or (remainder != 0):
+                if (threads_num == 1) or ((quotient==0) and (remainder != 0)): # fix_A
+                    if (quotient == 0) and (remainder != 0):
+                        logger.info(f'{remainder} rasters remaining, now using sequential mode.')           # fix_A
+                
+                    logger.info('Sequential mode')
+                    for idx, raster in enumerate(input_rasters):  # tqdm(input_rasters, desc=f'Raster loop', leave=True, colour='green', unit='raster', ncols=100):
+                        logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+                        self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
                         with open(progress_file, 'a') as f:
                             f.write(str(raster) + '\n')
                             logger.debug(f"Adding to progress file: '{raster}'")
+                else:   
+                    input_rasters = input_rasters[:quotient * threads_num]  # fix_A
+                    logger.debug(f"{len(input_rasters)} currently processed in parallel mode.")
 
-                with ThreadPoolExecutor(threads_num) as executor:
-                    futures = [executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
-                               for idx, raster in enumerate(input_rasters)]
-                    for f in futures:
-                        f.result()
-                ######################################## fix_A ########################################      
-                self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
-                ######################################## fix_A ########################################
+                    if not isinstance(threads_num, int):
+                        raise TypeError(f'Invalid type for `threads_num`.')
+                    logger.debug(f"Number of threads: {threads_num}")
+                    if threads_num > 6:
+                        logger.warning(f"The problem is I/O bound: a large number of threads does not largely improve performance. Got {threads_num} threads.")
+
+                    lock_file_write = Lock()
+                    # [info] la Semaphore doit être appliquée en amont,
+                    # notamment pour ne pas charger tous les rasters en RAM (début de la méthode `_find_split_intersect`)
+                    def _threaded(raster, overwrite_with_suffix, logger, lock_file_write, idx):
+                        logger.info(f"Processing raster [{idx+1}/{len(input_rasters)}]: {raster}")
+                        self._find_split_intersect(qgis_inst, raster, shapefile, overwrite_with_suffix)
+                        with lock_file_write:
+                            with open(progress_file, 'a') as f:
+                                f.write(str(raster) + '\n')
+                                logger.debug(f"Adding to progress file: '{raster}'")
+
+                    with ThreadPoolExecutor(threads_num) as executor:
+                        futures = [executor.submit(_threaded, raster, overwrite_with_suffix, logger, lock_file_write, idx)
+                                for idx, raster in enumerate(input_rasters)]
+                        for f in futures:
+                            f.result()
+                    ######################################## fix_A ########################################      
+                    self.split(threads_num=None, overwrite_with_suffix=overwrite_with_suffix)           # fix_A
+                    ######################################## fix_A ########################################
             
             # génére le fichier récapitulatif notes.txt
             SplittingRecap(self._output_path.parent).summarize()
@@ -381,29 +383,7 @@ class Splitter():
         if to_write:
             logger.error(f"{raster_name}: {len(to_write)} buildings could not be written "
                         f"after {MAX_ATTEMPTS} attempts (e.g. {to_write[0][2]})")
-            # optionally dump the filenames to a CSV so you can inspect them later
-                
-        
-        # while to_write:
-        #     if count >= 1:
-        #         logger.warning(f'{raster_name}: {count} nth attempt to write images:'
-        #               f'{len(to_write)} buildings remaining')
 
-        #     # normal disk write
-        #     for q, path, filename in tqdm(to_write, desc=f'Buildings - splitter: {raster_name} ', leave=True,
-        #                                   colour='red', unit='buildings', ncols=150, miniters=10, file=stdout):
-        #         self._do_split(raster_layer, vector_layer, q, path)
-
-        #     # files existence check
-        #     failed_write = []
-        #     for q, path, filename in to_write:
-        #         if not path.exists():
-        #             logger.debug(f"Error writing file: {filename}")
-        #             failed_write.append((q, path, filename))
-
-        #     # prepare for another loop if needed
-        #     to_write = failed_write.copy()
-        #     count += 1
 
         t1 = perf_counter()
 
@@ -441,41 +421,28 @@ class Splitter():
         if path.exists():
             path.unlink()
 
-        processing.run('gdal:cliprasterbymasklayer', {
-            'INPUT': raster_layer, 
-            'OUTPUT': str(path), 
-            'MASK': mask,
-            'ALPHA_BAND': False, 
-            'CROP_TO_CUTLINE': True, 
-            'KEEP_RESOLUTION': True,
-            'OPTIONS': 'COMPRESS=LZW', 
-            'DATA_TYPE': 0, 
-            'MULTITHREADING': False, # no effect
-        })
-        
-        # mask = processing.run("native:extractbyexpression", {
-        #     'INPUT': vector_layer,
-        #     'EXPRESSION': q,
-        #     'OUTPUT': 'TEMPORARY_OUTPUT'
-        # })['OUTPUT']
-        
-        # # if mask.featureCount() == 0:
-        # #     raise ValueError("The mask expression selected no features.")
-        # if path.exists():
-        #     path.unlink()
+        try:
+            processing.run('gdal:cliprasterbymasklayer', {
+                'INPUT': raster_layer,
+                'OUTPUT': str(path),
+                'MASK': mask,
+                'ALPHA_BAND': False,
+                'CROP_TO_CUTLINE': True,
+                'KEEP_RESOLUTION': True,
+                'OPTIONS': 'COMPRESS=LZW',
+                'DATA_TYPE': 0,
+                'MULTITHREADING': False,
+            })
+        except Exception as e:
+            # QgsProcessingException ou autre : on uniformise en RuntimeError
+            raise RuntimeError(f"gdal:cliprasterbymasklayer failed for {q}: {e}") from e
 
-        # params = {
-        #     'INPUT': raster_layer,
-        #     'OUTPUT': str(path),
-        #     'MASK': mask,
-        #     'ALPHA_BAND': False,
-        #     'CROP_TO_CUTLINE': True,
-        #     'KEEP_RESOLUTION': True,
-        #     'OPTIONS': 'COMPRESS=LZW',
-        #     'DATA_TYPE': 0,
-        #     'MULTITHREADING': False,  # no effect
-        # }
-        # processing.run('gdal:cliprasterbymasklayer', params)
-# end class
-
-
+        # GDAL peut n'afficher que "ERROR 4 / ERROR 10" sans lever d'exception :
+        # on vérifie donc le résultat réel sur le disque.
+        if not path.exists() or path.stat().st_size == 0:
+            if path.exists():
+                path.unlink()  # fichier vide/corrompu : on le retire pour que la relance le retraite
+            raise RuntimeError(
+                f"Output not written for {q}: {path} "
+                f"(temp folder deleted? disk full? see GDAL errors above)")
+            
