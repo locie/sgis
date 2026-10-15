@@ -22,7 +22,7 @@ Typical splitting speed is 3-5 days per department, using one thread.
 """
 import argparse
 from _production_constants import *
-from sgis.splitter import Splitter
+from sgis.splitter import RasterioSplitter
 from os import environ
 from pathlib import Path
 
@@ -43,7 +43,7 @@ def main(dep : str, year : str, resolution : int, threads_num = int, dest_folder
     vector_layer_path_preprocessed_path = vector_layer_dir_preprocessed_path / name_preprocessed 
         
     # GO !
-    splitter = Splitter(vector_layer_path_preprocessed_path, raster_layers_path, output_directory_path)
+    splitter = RasterioSplitter(vector_layer_path_preprocessed_path, raster_layers_path, output_directory_path)
     splitter.split(threads_num=threads_num) 
 
 if __name__ == "__main__":

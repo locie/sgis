@@ -13,7 +13,7 @@ from pathlib import Path
 from shutil import move
 # import py7zr
 import subprocess
-from production_scripts.rnb_geo_api import normalize_dept_code_number
+from rnb_geo_api import normalize_dept_code_number
 
 DOWNLOAD =    Path.home() / Path("temporary_LaCie/rasters/downloads.temp")
 TILES_LACIE = Path.home() / Path("temporary_LaCie/rasters/only_tiles")

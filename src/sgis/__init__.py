@@ -9,9 +9,9 @@ It consists in 3 modules:
 - `classifier`: define a convolutional model, have it learn some classification skills and apply this classifier on unlabelled images datasets
 """
 import warnings
-__all__ = ['vector_tools','splitter','classifier']
+# __all__ = ['splitter']
 
-from . import vector_tools
+# from . import vector_tools
 
 # Filtre warning tensorflow: DeprecationWarning: `np.bool8` is a deprecated alias for `np.bool_`.  (Deprecated NumPy 1.24)
 warnings.filterwarnings(

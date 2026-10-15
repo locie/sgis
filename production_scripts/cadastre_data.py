@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
-from production_scripts.rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
-from production_scripts._production_constants import *
+from rnb_geo_api import find_dept_metadata, request_all_rnb_csv_metadata
+from _production_constants import *
 
 
 

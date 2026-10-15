@@ -24,10 +24,10 @@ import zipfile
 from pathlib import Path
 import hashlib
 import pandas as pd
-from production_scripts.cadastre_data import RNB, Etalab
-from production_scripts.rnb_geo_api import normalize_dept_code_number
-from production_scripts.rnb_geo_api import request_all_rnb_csv_metadata
-from production_scripts._production_constants import *
+from cadastre_data import RNB, Etalab
+from rnb_geo_api import normalize_dept_code_number
+from rnb_geo_api import request_all_rnb_csv_metadata
+from _production_constants import *
 
 
 '''
