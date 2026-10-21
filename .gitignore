@@ -140,6 +140,10 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+envPredict/
+envDownloader/
+envNewSplitter/
+envSplitter/
 
 # Spyder project settings
 .spyderproject

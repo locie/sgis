@@ -59,6 +59,7 @@ from rasterio.windows import Window, transform as window_transform
 from shapely.geometry import box
 from shapely.ops import unary_union
 from tqdm import tqdm
+from xml.sax.saxutils import escape
 
 try:  # optional: keep the recap step of the original splitter if sgis is installed
     from sgis.splitter._splitting_recap import SplittingRecap
@@ -110,8 +111,23 @@ def _existing_ids(images_dir: Path, extension: str) -> set[str]:
         return {e.name[:-n] for e in it if e.name.endswith(extension)}
 
 
+def _aux_xml_content(transform, crs) -> str:
+    """
+    Content of a GDAL PAM sidecar (`<image>.aux.xml`): CRS + geotransform of the crop.
+    This is where GDAL stores the georeferencing of a JPEG (the format cannot hold it).
+    """
+    # rasterio Affine(a, b, c, d, e, f) -> GDAL geotransform (c, a, b, f, d, e)
+    gt = (transform.c, transform.a, transform.b, transform.f, transform.d, transform.e)
+    lines = ["<PAMDataset>"]
+    if crs is not None:
+        lines.append(f"  <SRS>{escape(crs.to_wkt())}</SRS>")
+    lines.append("  <GeoTransform>" + ", ".join(f"{v:.16g}" for v in gt) + "</GeoTransform>")
+    lines.append("</PAMDataset>")
+    return "\n".join(lines) + "\n"
+
+
 def _save_image_atomic(crop: np.ndarray, path: Path, image_format: str, quality: int,
-                       transform=None, crs=None):
+                       transform=None, crs=None, write_aux_xml: bool = False):
     """
     `crop` has shape (bands, height, width).
 
@@ -128,12 +144,21 @@ def _save_image_atomic(crop: np.ndarray, path: Path, image_format: str, quality:
         else:
             img = crop[0] if crop.shape[0] == 1 else np.moveaxis(crop, 0, -1)
             Image.fromarray(img).save(tmp, format="JPEG", quality=quality)
+
+        if write_aux_xml and transform is not None:
+            # sidecar first, image last: an existing image therefore always has its XML
+            aux = path.with_name(path.name + ".aux.xml")
+            aux_tmp = aux.with_name(f"{aux.name}.{os.getpid()}{TMP_SUFFIX}")
+            aux_tmp.write_text(_aux_xml_content(transform, crs), encoding="utf-8")
+            os.replace(aux_tmp, aux)
+            
         os.replace(tmp, path)
     except BaseException:
-        try:
-            tmp.unlink()
-        except FileNotFoundError:
-            pass
+        for p in (tmp, path.with_name(f"{path.name}.aux.xml.{os.getpid()}{TMP_SUFFIX}")):
+            try:
+                p.unlink()
+            except FileNotFoundError:
+                pass
         raise
 
 
@@ -194,7 +219,8 @@ def _group_jobs(jobs: list[_Job], band_rows: int | None) -> list[list[_Job]]:
 
 
 def _process_raster(raster_path: str, images_dir: str, repartition_dir: str,
-                    band_rows: int | None, jpeg_quality: int, image_format: str, extension: str):
+                    band_rows: int | None, jpeg_quality: int, image_format: str, extension: str,
+                    write_aux_xml: bool):
     t0 = perf_counter()
     raster_path = Path(raster_path)
     images_dir, repartition_dir = Path(images_dir), Path(repartition_dir)
@@ -256,7 +282,8 @@ def _process_raster(raster_path: str, images_dir: str, repartition_dir: str,
                         t = window_transform(Window(j.c0, j.r0, w, h), src.transform)
                         inside = geometry_mask([j.geom], out_shape=(h, w), transform=t, invert=True)
                         crop = np.where(inside[None, :, :], crop, 0).astype(data.dtype)
-                        _save_image_atomic(crop, path, image_format, jpeg_quality, t, src.crs)
+                        _save_image_atomic(crop, path, image_format, jpeg_quality, t, src.crs,
+                                           write_aux_xml)
                         writer.writerow([filename, filename])
                         fcsv.flush()
                         n_written += 1
@@ -337,7 +364,7 @@ class RasterioSplitter:
             logger.info(f"Removed {n} unfinished temporary image file(s) from a previous run.")
 
     def split(self, threads_num=None, band_rows=4096, image_format="JPEG", extension=None,
-              jpeg_quality=75):
+              jpeg_quality=75, write_aux_xml=True):
         """
         Write `<ID><extension>` for every building intersecting the rasters, skipping the buildings
         that already have an image. Safe to stop (Ctrl-C, kill, crash) and relaunch: only the
@@ -359,6 +386,9 @@ class RasterioSplitter:
             expects). Default: ".tif" for GTiff, ".jpg" for JPEG. It does not change the content.
         jpeg_quality : int
             JPEG quality (only used for image_format="JPEG"; GDAL default is 75).
+        write_aux_xml : bool
+            JPEG only. Write `<ID>.jpg.aux.xml` next to each image (CRS + geotransform), as
+            GDAL did in the original code. Not needed for GTiff (georeferencing is embedded).
         """
         if threads_num is None:
             threads_num = 1
@@ -376,7 +406,7 @@ class RasterioSplitter:
         self._remove_stale_temp_files()
         rasters, progress_file = self._determine_unprocessed_rasters()
         args = (str(self._output_images_path), str(self._output_repartition_path),
-                band_rows, jpeg_quality, image_format, extension)
+                band_rows, jpeg_quality, image_format, extension, write_aux_xml)
         failed = []
 
         def _done(raster_str, n, elapsed):
@@ -422,8 +452,9 @@ if __name__ == "__main__":
     ap.add_argument("--format", choices=["GTiff", "JPEG"], default="JPEG", help="image content (default: JPEG, like the original)")
     ap.add_argument("--extension", default=None, help="file extension, e.g. .tif, .jpg (default depends on --format)")
     ap.add_argument("--quality", type=int, default=75, help="JPEG quality (JPEG only)")
+    ap.add_argument("--no-aux-xml", action="store_true", help="do not write <image>.aux.xml sidecars (JPEG)")
     ns = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     RasterioSplitter(ns.vector_layer, ns.raster_dir, ns.output_dir).split(
         threads_num=ns.processes, band_rows=ns.band_rows or None, image_format=ns.format,
-        extension=ns.extension, jpeg_quality=ns.quality)
+        extension=ns.extension, jpeg_quality=ns.quality, write_aux_xml=not ns.no_aux_xml)
