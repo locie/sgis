@@ -2,7 +2,7 @@
 Usage:
 activate_PV_detection2;
 export PYTHONPATH=~/sgis:~/sgis/src:~/sgis/production_scripts:$PYTHONPATH
-dep=59;year=2025;cadastre_dir=2026-04-04
+dep=15;year=2025;cadastre_dir=2026-04-04
 python ~/sgis/production_scripts/check_repartition_by_rasters.py --dep $dep --year=${year} --cadastre_dir ${cadastre_dir}
 
 """

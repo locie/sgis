@@ -3,7 +3,7 @@ import pandas as pd
 from production_scripts.download_vectors import _count_non_polygon_geom
 
 # Vérifie qu'il n'y a pas de doublons dans le fichier RNB
-rnb_csv_file = "/home/thebaulm/LaCie_thebaulm/gis/vectors/cadastre/2026-04-04/unzipped/cadastre-31-batiments-csv/RNB_31.csv"
+rnb_csv_file = "/home/thebaulm/LaCie_thebaulm/gis/vectors/cadastre/2026-04-04/unzipped/cadastre-15-batiments-csv/RNB_15.csv"
 rnb = pd.read_csv(rnb_csv_file, usecols=["rnb_id"], dtype=str)
 
 print("check from: ", rnb_csv_file)
@@ -30,7 +30,7 @@ print("expected number:", len(rnb)-not_polygon)
 from pathlib import Path
 from collections import Counter
 
-folder = Path("/home/thebaulm/split/31/2025/rasters/images")
+folder = Path("/home/thebaulm/split/15/2025/rasters/images")
 print("check from: ", folder)
 
 # Récupérer les images
@@ -65,7 +65,7 @@ print(f"Nombre de doublons : {sum(count - 1 for count in duplicates.values())}")
 
 from collections import Counter
 
-txt_file = "/home/thebaulm/split/31/2025/rasters/progress.txt"
+txt_file = "/home/thebaulm/split/15/2025/rasters/progress.txt"
 print('check progress file: ', txt_file)
 
 with open(txt_file, "r", encoding="utf-8") as f:
@@ -88,8 +88,8 @@ import shutil
 
 
 
-progress_file = Path("/home/thebaulm/split/31/2025/rasters/progress.txt")
-csv_dir = Path("/home/thebaulm/split/31/2025/rasters/repartition_by_rasters")
+progress_file = Path("/home/thebaulm/split/15/2025/rasters/progress.txt")
+csv_dir = Path("/home/thebaulm/split/15/2025/rasters/repartition_by_rasters")
 
 # shutil.copy2(progress_file, progress_file.with_suffix(".txt.bak"))
 
@@ -112,9 +112,8 @@ missing = len(lines) - len(valid_lines)
 # with progress_file.open("w", encoding="utf-8") as f:
 #     for line in valid_lines:
 #         f.write(line + "\n")
-
-print(f"Lignes initiales : {len(lines)}")
-print(f"Lignes supprimées : {missing}")
-print(f"Lignes restantes : {len(valid_lines)}")
+# print(f"Lignes initiales : {len(lines)}")
+# print(f"Lignes supprimées : {missing}")
+# print(f"Lignes restantes : {len(valid_lines)}")
 
 
