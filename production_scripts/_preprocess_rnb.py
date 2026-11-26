@@ -1,6 +1,7 @@
 # #!/usr/bin/env python3
 from production_scripts._preprocess_cadastre_vectors import * 
 from pathlib import Path
+from production_scripts.download_vectors import _fix_shape_column_for_qgis
 from qgis.core import QgsVectorLayer
 
 class PreprocessRNB(VectorsPreprocess):
@@ -8,8 +9,14 @@ class PreprocessRNB(VectorsPreprocess):
     Classe de prétraitement des données de cadastre RNB.
     """
     def build_resulting_vectors_file_path(self, unzipped_path : Path) -> Path :
-        return unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}_reduced.csv"
-    
+        original_file_path = unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}.csv"
+        cleaned_file_path = unzipped_path / rf"cadastre-{self.dept_code}-batiments-csv"/ rf"RNB_{self.dept_code}_reduced.csv"
+        if(not cleaned_file_path.exists()):
+            if(not original_file_path.exists()):
+                raise FileNotFoundError(f"Original RNB file not found: {original_file_path}")
+            cleaned_file_path = _fix_shape_column_for_qgis(original_file_path)
+        return cleaned_file_path
+
     def build_version_cadastre(self, date : datetime): 
         return datetime.strftime(date, '%B, %Y, Cadastre R.N.B.')
     
