@@ -148,7 +148,7 @@ def _fix_shape_column_for_qgis(csv_path : Path):
     des chaînes de géométrie WKT (Well-Known Text). Les préfixes SRID peuvent provoquer des problèmes
     lors de l’importation des géométries dans QGIS ; cette étape de prétraitement garantit donc la compatibilité.
     '''
-    df = pd.read_csv(csv_path, sep=';', usecols=['rnb_id', 'shape'])
+    df = pd.read_csv(csv_path, sep=',', usecols=['rnb_id', 'shape'])
     outpath = csv_path.with_name(f"{csv_path.stem}_reduced{csv_path.suffix}")
     df['shape'] = df['shape'].str.replace(r'^SRID=4326;', '', regex=True)
     df = df[df['shape'].str.startswith(('POLYGON(', 'MULTIPOLYGON('))]
