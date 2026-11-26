@@ -4,6 +4,9 @@ from itertools import groupby
 from os import environ
 from pathlib import Path
 import re
+import argparse
+
+from production_scripts.check_repartition_by_rasters import main
 
 BASE_DIR="LaCie_thebaulm" # Nom du dossier de stockage des donnees d'entree et de sortie à la racine du home de l'utilisateur.
 
@@ -75,4 +78,11 @@ def scan_cadastre_vectors_folder(data_type : str):
         for p in group:
             print(f"  {p}")
         print()
-    
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--data-type", type=str, required=True, help="Data type: 'etalab' or 'rnb'")
+    args = parser.parse_args()
+
+    data_type = args.data_type
+    scan_cadastre_vectors_folder(data_type)
